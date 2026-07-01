@@ -10,7 +10,7 @@ async function register(data) {
     const exists = await repository.findByEmail(data.email);
 
     if (exists)
-        throw new AppError("Email already exists", 400);
+        throw new AppError("Email already exists", 409);
 
     const hash = await bcrypt.hash(data.password, 10);
 
@@ -55,7 +55,23 @@ async function login(data) {
     };
 }
 
+async function getCurrentUser(id) {
+    const user = await repository.findById(id);
+
+    if (!user) {
+        throw new AppError("User not found", 404);
+    }
+
+    return {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role
+    };
+}
+
 module.exports = {
     register,
     login,
+    getCurrentUser
 };

@@ -1,42 +1,37 @@
-const service = require("../services/auth.service");
+const authService = require("../services/auth.service");
+const asyncHandler = require("../utils/asyncHandler");
 
-async function register(req, res) {
+exports.register = asyncHandler(async (req, res) => {
+    const user = await authService.register(req.body);
 
-    try {
+    res.status(201).json({
+        success: true,
+        message: "User registered successfully",
+        user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role
+        }
+    });
+});
 
-        const user = await service.register(req.body);
+exports.login = asyncHandler(async (req, res) => {
+    const result = await authService.login(req.body);
 
-        res.status(201).json(user);
+    res.status(200).json({
+        success: true,
+        message: "Login successful",
+        token: result.token,
+        user: result.user
+    });
+});
 
-    } catch (err) {
+exports.me = asyncHandler(async (req, res) => {
+    const user = await authService.getCurrentUser(req.user.id);
 
-        res.status(400).json({
-            message: err.message,
-        });
-
-    }
-
-}
-
-async function login(req, res) {
-
-    try {
-
-        const result = await service.login(req.body);
-
-        res.json(result);
-
-    } catch (err) {
-
-        res.status(401).json({
-            message: err.message,
-        });
-
-    }
-
-}
-
-module.exports = {
-    register,
-    login,
-};
+    res.status(200).json({
+        success: true,
+        user
+    });
+});
