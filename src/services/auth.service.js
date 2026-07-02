@@ -20,7 +20,7 @@ async function register(data) {
         last_name: data.last_name,
         email: data.email,
         password_hash: hash,
-        role: "participant",
+        role: "PARTICIPANT",
     });
 
     return user;
