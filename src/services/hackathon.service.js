@@ -180,6 +180,88 @@ async function getParticipants(hackathonId) {
 
 }
 
+/**
+ * Assign judge to hackathon
+ */
+async function assignJudge(hackathonId, judgeId) {
+
+    const hackathon = await hackathonRepository.findById(hackathonId);
+
+    if (!hackathon) {
+        throw new AppError("Hackathon not found", 404);
+    }
+
+    const judge = await userRepository.findById(judgeId);
+
+    if (!judge) {
+        throw new AppError("Judge not found", 404);
+    }
+
+    if (judge.role !== "JUDGE") {
+        throw new AppError("User is not a judge", 400);
+    }
+
+    const assignment = await hackathonRepository.assignJudge(
+        hackathonId,
+        judgeId
+    );
+
+    if (!assignment) {
+        throw new AppError(
+            "Judge is already assigned to this hackathon",
+            409
+        );
+    }
+
+    return assignment;
+}
+
+/**
+ * Remove judge from hackathon
+ */
+async function removeJudge(hackathonId, judgeId) {
+
+    const result = await hackathonRepository.removeJudge(
+        hackathonId,
+        judgeId
+    );
+
+    if (result.rowCount === 0) {
+        throw new AppError("Assignment not found", 404);
+    }
+
+    return {
+        message: "Judge removed successfully"
+    };
+}
+
+/**
+ * Get judges for a hackathon
+ */
+async function getHackathonJudges(hackathonId) {
+
+    const hackathon = await hackathonRepository.findById(hackathonId);
+
+    if (!hackathon) {
+        throw new AppError("Hackathon not found", 404);
+    }
+
+    return await hackathonRepository.getHackathonJudges(hackathonId);
+}
+
+/**
+ * Get hackathons for a judge
+ */
+async function getJudgeHackathons(judgeId) {
+
+    const judge = await userRepository.findById(judgeId);
+
+    if (!judge) {
+        throw new AppError("Judge not found", 404);
+    }
+
+    return await hackathonRepository.getJudgeHackathons(judgeId);
+}
 module.exports = {
     getAllHackathons,
     getHackathonById,
@@ -188,5 +270,9 @@ module.exports = {
     deleteHackathon,
     registerParticipant,
     unregisterParticipant,
-    getParticipants
+    getParticipants,
+    assignJudge,
+    removeJudge,
+    getHackathonJudges,
+    getJudgeHackathons
 };

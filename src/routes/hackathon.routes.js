@@ -12,6 +12,8 @@ const {
     hackathonIdValidator,
     createHackathonValidator,
     updateHackathonValidator,
+    assignJudgeValidator,
+    judgeIdValidator
 } = require("../validators/hackathon.validator");
 
 /*
@@ -97,6 +99,48 @@ router.get(
     hackathonIdValidator,
     validate,
     hackathonController.getParticipants
+);
+
+// Assign a judge
+router.post(
+    "/:id/judges",
+    authenticate,
+    authorize("ADMIN"),
+    hackathonIdValidator,
+    assignJudgeValidator,
+    validate,
+    hackathonController.assignJudge
+);
+
+// Remove a judge
+router.delete(
+    "/:id/judges/:judgeId",
+    authenticate,
+    authorize("ADMIN"),
+    hackathonIdValidator,
+    judgeIdValidator,
+    validate,
+    hackathonController.removeJudge
+);
+
+// List judges for a hackathon
+router.get(
+    "/:id/judges",
+    authenticate,
+    authorize("ADMIN"),
+    hackathonIdValidator,
+    validate,
+    hackathonController.getHackathonJudges
+);
+
+// List hackathons assigned to a judge
+router.get(
+    "/judges/:judgeId/hackathons",
+    authenticate,
+    authorize("ADMIN"),
+    judgeIdValidator,
+    validate,
+    hackathonController.getJudgeHackathons
 );
 
 module.exports = router;

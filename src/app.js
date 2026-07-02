@@ -3,6 +3,9 @@ const express = require("express");
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
 const hackathonRoutes = require("./routes/hackathon.routes");
+const teamRoutes = require("./routes/team.routes");
+const submissionRoutes = require("./routes/submission.routes");
+const evaluationRoutes = require("./routes/evaluation.routes");
 
 const errorHandler = require("./middleware/error.middleware");
 
@@ -15,6 +18,9 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/hackathons", hackathonRoutes);
+app.use("/api/teams", teamRoutes);
+app.use("/api/submissions", submissionRoutes);
+app.use("/api/evaluations", evaluationRoutes);
 
 const path = require("path");
 

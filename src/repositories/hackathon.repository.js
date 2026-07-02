@@ -246,6 +246,119 @@ async function isParticipant(hackathonId, userId) {
     );
 }
 
+
+/**
+ * Assign a judge to a hackathon
+ */
+async function assignJudge(hackathonId, judgeId) {
+
+    return db.oneOrNone(
+        `
+        INSERT INTO hackathon_judges (
+            hackathon_id,
+            judge_id
+        )
+        VALUES ($1, $2)
+        ON CONFLICT (hackathon_id, judge_id)
+        DO NOTHING
+        RETURNING *
+        `,
+        [
+            hackathonId,
+            judgeId
+        ]
+    );
+
+}
+
+/**
+ * Remove a judge from a hackathon
+ */
+async function removeJudge(hackathonId, judgeId) {
+
+    return db.result(
+        `
+        DELETE
+        FROM hackathon_judges
+        WHERE hackathon_id = $1
+        AND judge_id = $2
+        `,
+        [
+            hackathonId,
+            judgeId
+        ]
+    );
+
+}
+
+
+/**
+ * Check if a judge is assigned to a hackathon
+ */
+async function isJudgeAssigned(hackathonId, judgeId) {
+
+    return db.oneOrNone(
+        `
+        SELECT *
+        FROM hackathon_judges
+        WHERE hackathon_id = $1
+        AND judge_id = $2
+        `,
+        [
+            hackathonId,
+            judgeId
+        ]
+    );
+
+}
+
+/**
+ * Get all judges assigned to a hackathon
+ */
+async function getHackathonJudges(hackathonId) {
+
+    return db.any(
+        `
+        SELECT
+            u.id,
+            u.username,
+            u.first_name,
+            u.last_name,
+            u.email,
+            hj.assigned_at
+        FROM hackathon_judges hj
+        JOIN users u
+            ON u.id = hj.judge_id
+        WHERE hj.hackathon_id = $1
+        ORDER BY u.first_name, u.last_name
+        `,
+        [hackathonId]
+    );
+
+}
+
+/**
+ * Get all hackathons assigned to a judge
+ */
+async function getJudgeHackathons(judgeId) {
+
+    return db.any(
+        `
+        SELECT
+            h.*,
+            hj.assigned_at
+        FROM hackathon_judges hj
+        JOIN hackathons h
+            ON h.id = hj.hackathon_id
+        WHERE hj.judge_id = $1
+        ORDER BY h.start_date
+        `,
+        [judgeId]
+    );
+
+}
+
+
 module.exports = {
     findAll,
     findById,
@@ -255,5 +368,10 @@ module.exports = {
     registerParticipant,
     unregisterParticipant,
     getParticipants,
-    isParticipant
+    isParticipant,
+    assignJudge,
+    removeJudge,
+    isJudgeAssigned,
+    getHackathonJudges,
+    getJudgeHackathons
 };

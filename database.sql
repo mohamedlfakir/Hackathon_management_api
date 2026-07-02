@@ -104,6 +104,8 @@ CREATE TABLE teams (
 
     name VARCHAR(100) NOT NULL,
 
+	captain_id INTEGER NOT NULL,
+
 	logo_path VARCHAR(255),
 	
     description TEXT,
@@ -114,11 +116,15 @@ CREATE TABLE teams (
 
     FOREIGN KEY (hackathon_id)
         REFERENCES hackathons(id)
-        ON DELETE CASCADE,
+        ON DELETE SET NULL,
 
     FOREIGN KEY (created_by)
         REFERENCES users(id)
-        ON DELETE CASCADE
+        ON DELETE SET NULL,
+
+	FOREIGN KEY (captain_id)
+        REFERENCES users(id)
+        ON DELETE SET NULL 
 );
 
 -- =====================================================
@@ -225,6 +231,23 @@ CREATE TABLE evaluations (
     UNIQUE(submission_id, judge_id, criterion_id)
 );
 
+CREATE TABLE hackathon_judges (
+    hackathon_id INT NOT NULL,
+    judge_id INT NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (hackathon_id, judge_id),
+
+    CONSTRAINT fk_hackathon_judges_hackathon
+        FOREIGN KEY (hackathon_id)
+        REFERENCES hackathons(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_hackathon_judges_judge
+        FOREIGN KEY (judge_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+);
 -- =====================================================
 -- DEFAULT EVALUATION CRITERIA
 -- =====================================================

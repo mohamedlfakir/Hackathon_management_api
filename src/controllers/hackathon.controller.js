@@ -114,6 +114,74 @@ exports.getParticipants = asyncHandler(async (req, res) => {
     });
 });
 
+/*
+* POST /api/hackathons/:id/assign-judge
+*/
+exports.assignJudge = asyncHandler(async (req, res) => {
+
+    const assignment = await hackathonService.assignJudge(
+        req.params.id,
+        req.body.judge_id
+    );
+
+    res.status(201).json({
+        success: true,
+        message: "Judge assigned successfully",
+        assignment
+    });
+
+});
+
+/*
+* DELETE /api/hackathons/:id/remove-judge
+*/
+exports.removeJudge = asyncHandler(async (req, res) => {
+
+    const result = await hackathonService.removeJudge(
+        req.params.id,
+        req.params.judgeId
+    );
+
+    res.status(200).json({
+        success: true,
+        message: result.message
+    });
+
+});
+
+
+/*
+* GET /api/hackathons/:id/judges
+*/
+exports.getHackathonJudges = asyncHandler(async (req, res) => {
+
+    const judges = await hackathonService.getHackathonJudges(
+        req.params.id
+    );
+
+    res.status(200).json({
+        success: true,
+        judges
+    });
+
+});
+
+
+/*
+* GET /api/judges/:judgeId/hackathons
+*/
+exports.getJudgeHackathons = asyncHandler(async (req, res) => {
+
+    const hackathons = await hackathonService.getJudgeHackathons(
+        req.params.judgeId
+    );
+
+    res.status(200).json({
+        success: true,
+        hackathons
+    });
+
+});
 module.exports = {
     getAllHackathons: exports.getAllHackathons,
     getHackathonById: exports.getHackathonById,
@@ -122,5 +190,9 @@ module.exports = {
     deleteHackathon: exports.deleteHackathon,
     registerParticipant: exports.registerParticipant,
     unregisterParticipant: exports.unregisterParticipant,
-    getParticipants: exports.getParticipants
+    getParticipants: exports.getParticipants,
+    assignJudge: exports.assignJudge,
+    removeJudge: exports.removeJudge,
+    getHackathonJudges: exports.getHackathonJudges,
+    getJudgeHackathons: exports.getJudgeHackathons
 };

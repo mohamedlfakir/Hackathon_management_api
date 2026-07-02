@@ -126,10 +126,34 @@ const updateHackathonValidator = [
             "CANCELLED"
         ])
         .withMessage("Invalid status")
-];
+    ];
+
+    /*
+    * Assign judge to hackathon
+    */
+    const assignJudgeValidator = [
+
+        body("judge_id")
+            .isInt({ min: 1 })
+            .withMessage("Judge ID must be a positive integer")
+
+    ];
+
+    /*
+    * Remove judge from hackathon
+    */
+    const judgeIdValidator = [
+
+        param("judgeId")
+            .isInt({ min: 1 })
+            .withMessage("Judge ID must be a positive integer")
+
+    ];
 
 module.exports = {
     hackathonIdValidator,
     createHackathonValidator,
-    updateHackathonValidator
+    updateHackathonValidator,
+    assignJudgeValidator,
+    judgeIdValidator
 };
