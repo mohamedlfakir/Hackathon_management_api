@@ -101,10 +101,10 @@ exports.unregisterParticipant = asyncHandler(async (req, res) => {
 });
 
 /**
- * GET /api/hackathons/:id/participants
+ * GET /api/hackathons/:id/solo-participants
  */
-exports.getParticipants = asyncHandler(async (req, res) => {
-    const participants = await hackathonService.getParticipants(
+exports.getSoloParticipants = asyncHandler(async (req, res) => {
+    const participants = await hackathonService.getSoloParticipants(
         req.params.id
     );
 
@@ -182,6 +182,76 @@ exports.getJudgeHackathons = asyncHandler(async (req, res) => {
     });
 
 });
+
+
+exports.getHackathonTeams = asyncHandler(async (req, res, next) => {
+    try {
+        const hackathonId = Number(req.params.id);
+
+        const teams = await hackathonService.getHackathonTeams(hackathonId);
+
+        res.json(teams);
+    } catch (err) {
+        next(err);
+    }
+});
+
+exports.registerTeam = asyncHandler(async (req, res, next) => {
+    try {
+        const hackathonId = Number(req.params.id);
+        const { team_id } = req.body;
+
+        const result = await hackathonService.registerTeam(
+            hackathonId,
+            team_id
+        );
+
+        res.status(201).json(result);
+    } catch (err) {
+        next(err);
+    }
+});
+
+exports.unregisterTeam = asyncHandler(async (req, res, next) => {
+    try {
+        const hackathonId = Number(req.params.id);
+        const teamId = Number(req.params.teamId);
+
+        await hackathonService.unregisterTeam(hackathonId, teamId);
+
+        res.status(204).send();
+    } catch (err) {
+        next(err);
+    }
+});
+
+exports.getHackathonSubmissions = asyncHandler(async (req, res, next) => {
+    try {
+        const hackathonId = Number(req.params.id);
+
+        const submissions =
+            await hackathonService.getHackathonSubmissions(hackathonId);
+
+        res.json(submissions);
+    } catch (err) {
+        next(err);
+    }
+});
+
+exports.getHackathonParticipants = asyncHandler(async (req, res, next) => {
+    try {
+        const hackathonId = Number(req.params.id);
+
+        const participants =
+            await hackathonService.getHackathonParticipants(hackathonId);
+
+        return res.status(200).json(participants);
+    } catch (error) {
+        next(error);
+    }
+})
+
+
 module.exports = {
     getAllHackathons: exports.getAllHackathons,
     getHackathonById: exports.getHackathonById,
@@ -190,9 +260,14 @@ module.exports = {
     deleteHackathon: exports.deleteHackathon,
     registerParticipant: exports.registerParticipant,
     unregisterParticipant: exports.unregisterParticipant,
-    getParticipants: exports.getParticipants,
+    getSoloParticipants: exports.getSoloParticipants,
     assignJudge: exports.assignJudge,
     removeJudge: exports.removeJudge,
     getHackathonJudges: exports.getHackathonJudges,
-    getJudgeHackathons: exports.getJudgeHackathons
+    getJudgeHackathons: exports.getJudgeHackathons,
+    getHackathonTeams: exports.getHackathonTeams,
+    registerTeam: exports.registerTeam,
+    unregisterTeam: exports.unregisterTeam,
+    getHackathonSubmissions: exports.getHackathonSubmissions,
+    getHackathonParticipants: exports.getHackathonParticipants
 };

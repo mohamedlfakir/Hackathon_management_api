@@ -103,8 +103,7 @@ async function updateSubmission(id, userId, data) {
         description: data.description ?? submission.description,
         github_url: data.github_url ?? submission.github_url,
         figma_url: data.figma_url ?? submission.figma_url,
-        presentation_path:
-            data.presentation_path ?? submission.presentation_path
+        presentation_path: data.presentation_path ?? submission.presentation_path
     });
 
 }
@@ -236,7 +235,7 @@ async function updateFigmaUrl(id, userId, figmaUrl) {
         400
     );
     }
-    
+
     return await submissionRepository.updateFigmaUrl(id, figmaUrl);
 }
 

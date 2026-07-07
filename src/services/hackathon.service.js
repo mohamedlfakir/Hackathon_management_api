@@ -72,7 +72,7 @@ async function updateHackathon(id, data) {
         start_date: data.start_date ?? hackathon.start_date,
         end_date: data.end_date ?? hackathon.end_date,
         registration_deadline:
-            data.registration_deadline ?? hackathon.registration_deadline,
+        data.registration_deadline ?? hackathon.registration_deadline,
         status: data.status ?? hackathon.status
     });
 
@@ -166,9 +166,9 @@ async function unregisterParticipant(hackathonId, userId) {
 }
 
 /**
- * Get participants
+ * Get solo participants
  */
-async function getParticipants(hackathonId) {
+async function getSoloParticipants(hackathonId) {
 
     const hackathon = await hackathonRepository.findById(hackathonId);
 
@@ -176,7 +176,7 @@ async function getParticipants(hackathonId) {
         throw new AppError("Hackathon not found", 404);
     }
 
-    return await hackathonRepository.getParticipants(hackathonId);
+    return await hackathonRepository.getSoloParticipants(hackathonId);
 
 }
 
@@ -262,6 +262,27 @@ async function getJudgeHackathons(judgeId) {
 
     return await hackathonRepository.getJudgeHackathons(judgeId);
 }
+
+async function getHackathonTeams(hackathonId) {
+    return hackathonRepository.getHackathonTeams(hackathonId);
+}
+
+async function registerTeam(hackathonId, teamId) {
+    return hackathonRepository.registerTeam(hackathonId, teamId);
+}
+
+async function unregisterTeam(hackathonId, teamId) {
+    return hackathonRepository.unregisterTeam(hackathonId, teamId);
+}
+
+async function getHackathonSubmissions(hackathonId) {
+    return hackathonRepository.getHackathonSubmissions(hackathonId);
+}
+
+async function getHackathonParticipants(hackathonId) {
+    return await hackathonRepository.getHackathonParticipants(hackathonId);
+}
+
 module.exports = {
     getAllHackathons,
     getHackathonById,
@@ -270,9 +291,14 @@ module.exports = {
     deleteHackathon,
     registerParticipant,
     unregisterParticipant,
-    getParticipants,
+    getSoloParticipants,
     assignJudge,
     removeJudge,
     getHackathonJudges,
-    getJudgeHackathons
+    getJudgeHackathons,
+    getHackathonTeams,
+    registerTeam,
+    unregisterTeam,
+    getHackathonSubmissions,
+    getHackathonParticipants
 };

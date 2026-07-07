@@ -93,12 +93,12 @@ router.delete(
 );
 
 router.get(
-    "/:id/participants",
+    "/:id/solo-participants",
     authenticate,
     authorize("ADMIN", "ORGANIZER"),
     hackathonIdValidator,
     validate,
-    hackathonController.getParticipants
+    hackathonController.getSoloParticipants
 );
 
 // Assign a judge
@@ -143,4 +143,17 @@ router.get(
     hackathonController.getJudgeHackathons
 );
 
+router.get("/:id/teams", hackathonController.getHackathonTeams);
+router.post("/:id/teams", hackathonController.registerTeam);
+router.delete("/:id/teams/:teamId", hackathonController.unregisterTeam);
+
+router.get("/:id/submissions", hackathonController.getHackathonSubmissions);    
+
+router.get(
+    "/:id/participants",
+    hackathonController.getHackathonParticipants
+);
+
 module.exports = router;
+
+

@@ -22,8 +22,7 @@ const createHackathonValidator = [
 
     body("theme")
         .trim()
-        .notEmpty()
-        .withMessage("Theme is required")
+        .optional()
         .isLength({ max: 150 })
         .withMessage("Theme cannot exceed 150 characters"),
 

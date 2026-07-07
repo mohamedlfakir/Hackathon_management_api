@@ -195,9 +195,9 @@ async function unregisterParticipant(hackathonId, userId) {
 }
 
 /**
- * Get participants
+ * Get solo participants
  */
-async function getParticipants(hackathonId) {
+async function getSoloParticipants(hackathonId) {
     return db.any(
         `
         SELECT
@@ -359,6 +359,111 @@ async function getJudgeHackathons(judgeId) {
 }
 
 
+async function getHackathonTeams(hackathonId) {
+    const { rows } = await db.query(
+        `
+        SELECT t.*
+        FROM hackathon_teams ht
+        JOIN teams t
+            ON t.id = ht.team_id
+        WHERE ht.hackathon_id = $1
+        ORDER BY t.name 
+        `,
+        [hackathonId]
+    );
+
+    return rows;
+}
+
+
+async function getHackathonParticipants(hackathonId) {
+    const { rows } = await db.query(
+        `
+        SELECT
+            hp.id,
+            hp.hackathon_id,
+            'USER' AS participant_type,
+            u.id AS participant_id,
+            u.first_name,
+            u.last_name,
+            u.email,
+            NULL::text AS team_name
+        FROM hackathon_participants hp
+        JOIN users u
+            ON hp.user_id = u.id
+        WHERE hp.hackathon_id = $1
+          AND hp.user_id IS NOT NULL
+
+        UNION ALL
+
+        SELECT
+            hp.id,
+            hp.hackathon_id,
+            'TEAM' AS participant_type,
+            t.id AS participant_id,
+            NULL AS first_name,
+            NULL AS last_name,
+            NULL AS email,
+            t.name AS team_name
+        FROM hackathon_participants hp
+        JOIN teams t
+            ON hp.team_id = t.id
+        WHERE hp.hackathon_id = $1
+          AND hp.team_id IS NOT NULL
+
+        ORDER BY participant_type, participant_id
+        `,
+        [hackathonId]
+    );
+
+    return rows;
+}
+
+
+async function registerTeam(hackathonId, teamId) {
+    const { rows } = await db.query(
+        `
+        INSERT INTO hackathon_teams (
+            hackathon_id,
+            team_id
+        )
+        VALUES ($1, $2)
+        RETURNING *
+        `,
+        [hackathonId, teamId]
+    );
+
+    return rows[0];
+}
+
+async function unregisterTeam(hackathonId, teamId) {
+    await db.query(
+        `
+        DELETE
+        FROM hackathon_teams
+        WHERE hackathon_id = $1
+          AND team_id = $2
+        `,
+        [hackathonId, teamId]
+    );
+}
+
+
+async function getHackathonSubmissions(hackathonId) {
+    const { rows } = await db.query(
+        `
+        SELECT *
+        FROM submissions
+        WHERE hackathon_id = $1
+        ORDER BY submitted_at DESC
+        `,
+        [hackathonId]
+    );
+
+    return rows;
+}
+
+
 module.exports = {
     findAll,
     findById,
@@ -367,11 +472,16 @@ module.exports = {
     deleteHackathon,
     registerParticipant,
     unregisterParticipant,
-    getParticipants,
+    getSoloParticipants,
     isParticipant,
     assignJudge,
     removeJudge,
     isJudgeAssigned,
     getHackathonJudges,
-    getJudgeHackathons
+    getJudgeHackathons,
+    getHackathonTeams,
+    registerTeam,
+    unregisterTeam,
+    getHackathonSubmissions,
+    getHackathonParticipants
 };

@@ -71,7 +71,7 @@ router.get(
     authorize("ADMIN"),
     userController.getUserById
 );
-
+    
 router.put(
     "/:id/role",
     authenticate,

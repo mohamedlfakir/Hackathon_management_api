@@ -54,8 +54,8 @@ CREATE TABLE hackathons (
 
     registration_deadline TIMESTAMP,
 
-    status VARCHAR(20) DEFAULT 'OPEN' CHECK (
-        status IN ('OPEN','CLOSED','FINISHED')
+    status VARCHAR(20) DEFAULT 'UPCOMING' CHECK (
+        status IN ('OPEN','CLOSED','FINISHED','UPCOMING')
     ),
 
     created_by INTEGER NOT NULL,
@@ -77,7 +77,9 @@ CREATE TABLE hackathon_participants (
 
     hackathon_id INTEGER NOT NULL,
 
-    user_id INTEGER NOT NULL,
+    user_id INTEGER,
+
+	team_id INTEGER,
 
     registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -162,7 +164,11 @@ CREATE TABLE submissions (
 
     id SERIAL PRIMARY KEY,
 
-    team_id INTEGER NOT NULL UNIQUE,
+    team_id INTEGER,
+
+	user_id INTEGER,
+
+	hackathon_id INTEGER NOT NULL,
 
     title VARCHAR(200) NOT NULL,
 
@@ -178,7 +184,15 @@ CREATE TABLE submissions (
 
     FOREIGN KEY (team_id)
         REFERENCES teams(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+		
+	FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+	FOREIGN KEY (hackathon_id)
+		REFERENCES hackathons(id)
+		ON DELETE CASCADE
 );
 
 -- =====================================================
