@@ -90,6 +90,25 @@ exports.joinTeam = asyncHandler(async (req, res) => {
 });
 
 /**
+ * Remove member from team
+ */
+exports.removeMember = asyncHandler(async (req, res, nex) => { 
+    try {
+        const teamId = Number(req.params.id);
+        const userId = Number(req.params.userId);
+
+        await teamService.removeMember(
+            teamId,
+            userId,
+            req.user
+        );
+
+        res.status(204).send();
+    } catch (error) {
+        next(error);
+    }
+});
+/**
  * DELETE /api/teams/:id/leave
  */
 exports.leaveTeam = asyncHandler(async (req, res) => {
@@ -140,6 +159,29 @@ exports.updateAvatar = asyncHandler(async (req, res) => {
     });
 });
 
+/**
+ * Get authenticated user's team in a hackathon
+ */
+exports.getUserTeam = asyncHandler(async (req, res) => {
+    try {
+        const hackathonId = Number(req.params.hackathonId);
+        const userId = req.user.id;
+
+        const team = await teamService.getUserTeam(
+            hackathonId,
+            userId
+        );
+
+    res.status(200).json({
+        success: true,
+        team
+    });
+
+    } catch (error) {
+        next(error);
+    }
+});
+
 module.exports = {
     getAllTeams: exports.getAllTeams,
     getTeamById: exports.getTeamById,
@@ -149,5 +191,7 @@ module.exports = {
     joinTeam: exports.joinTeam,
     leaveTeam: exports.leaveTeam,
     getMembers: exports.getMembers,
-    updateAvatar: exports.updateAvatar
+    updateAvatar: exports.updateAvatar,
+    getUserTeam: exports.getUserTeam,
+    removeMember: exports.removeMember
 };

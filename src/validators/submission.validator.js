@@ -13,9 +13,9 @@ const submissionIdValidator = [
  * Create submission
  */
 const createSubmissionValidator = [
-    body("team_id")
+    body("hackathon_id")
         .isInt({ min: 1 })
-        .withMessage("Team ID is required"),
+        .withMessage("Hachathon ID is required"),
 
     body("title")
         .trim()

@@ -1,5 +1,7 @@
 const hackathonRepository = require("../repositories/hackathon.repository");
-const AppError = require("../utils/AppError");
+const userRepository = require("../repositories/user.repository");
+
+const AppError = require("../utils/AppError");  
 
 /**
  * Get all hackathons
@@ -34,11 +36,11 @@ async function createHackathon(data, createdBy) {
     }
 
     if (
-        new Date(data.registration_deadline) >
+        new Date(data.registration_deadline) <
         new Date(data.start_date)
     ) {
         throw new AppError(
-            "Registration deadline must be before or on the start date",
+            "Registration deadline must be after the start date",
             400
         );
     }
@@ -166,6 +168,20 @@ async function unregisterParticipant(hackathonId, userId) {
 }
 
 /**
+ * Check if authenticated user is a participant in a hackathon
+ */
+async function isParticipant(hackathonId, userId) {
+    const participant = await hackathonRepository.isParticipant(
+        hackathonId,
+        userId
+    );
+
+    return {
+        isParticipant: !!participant
+    };
+}
+
+/**
  * Get solo participants
  */
 async function getSoloParticipants(hackathonId) {
@@ -264,19 +280,19 @@ async function getJudgeHackathons(judgeId) {
 }
 
 async function getHackathonTeams(hackathonId) {
-    return hackathonRepository.getHackathonTeams(hackathonId);
+    return await hackathonRepository.getHackathonTeams(hackathonId);
 }
 
 async function registerTeam(hackathonId, teamId) {
-    return hackathonRepository.registerTeam(hackathonId, teamId);
+    return await hackathonRepository.registerTeam(hackathonId, teamId);
 }
 
 async function unregisterTeam(hackathonId, teamId) {
-    return hackathonRepository.unregisterTeam(hackathonId, teamId);
+    return await hackathonRepository.unregisterTeam(hackathonId, teamId);
 }
 
 async function getHackathonSubmissions(hackathonId) {
-    return hackathonRepository.getHackathonSubmissions(hackathonId);
+    return await hackathonRepository.getHackathonSubmissions(hackathonId);
 }
 
 async function getHackathonParticipants(hackathonId) {
@@ -300,5 +316,6 @@ module.exports = {
     registerTeam,
     unregisterTeam,
     getHackathonSubmissions,
-    getHackathonParticipants
+    getHackathonParticipants,
+    isParticipant
 };

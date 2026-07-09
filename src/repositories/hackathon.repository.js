@@ -360,7 +360,7 @@ async function getJudgeHackathons(judgeId) {
 
 
 async function getHackathonTeams(hackathonId) {
-    const { rows } = await db.query(
+    return await db.query(
         `
         SELECT t.*
         FROM hackathon_teams ht
@@ -372,12 +372,11 @@ async function getHackathonTeams(hackathonId) {
         [hackathonId]
     );
 
-    return rows;
 }
 
 
 async function getHackathonParticipants(hackathonId) {
-    const { rows } = await db.query(
+    return await db.query(
         `
         SELECT
             hp.id,
@@ -416,14 +415,13 @@ async function getHackathonParticipants(hackathonId) {
         [hackathonId]
     );
 
-    return rows;
 }
 
 
 async function registerTeam(hackathonId, teamId) {
-    const { rows } = await db.query(
+    return await db.query(
         `
-        INSERT INTO hackathon_teams (
+        INSERT INTO hackathon_participants (
             hackathon_id,
             team_id
         )
@@ -433,7 +431,6 @@ async function registerTeam(hackathonId, teamId) {
         [hackathonId, teamId]
     );
 
-    return rows[0];
 }
 
 async function unregisterTeam(hackathonId, teamId) {
@@ -450,7 +447,7 @@ async function unregisterTeam(hackathonId, teamId) {
 
 
 async function getHackathonSubmissions(hackathonId) {
-    const { rows } = await db.query(
+    return await db.query(
         `
         SELECT *
         FROM submissions
@@ -460,7 +457,6 @@ async function getHackathonSubmissions(hackathonId) {
         [hackathonId]
     );
 
-    return rows;
 }
 
 

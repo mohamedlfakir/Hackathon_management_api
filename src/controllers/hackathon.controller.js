@@ -69,36 +69,31 @@ exports.deleteHackathon = asyncHandler(async (req, res) => {
     });
 });
 
-/**
- * POST /api/hackathons/:id/register
- */
-exports.registerParticipant = asyncHandler(async (req, res) => {
+
+exports.assignUserByAdmin = asyncHandler(async (req, res) => {
+    const hackathonId = req.params.id;
+    const { userId } = req.body; // Reçu depuis la modale admin
+
+    if (!userId) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "L'identifiant de l'utilisateur (userId) est requis dans le corps de la requête." 
+        });
+    }
+
+    // On réutilise votre logique de service existante car elle prend déjà les 2 ID en arguments !
     const registration = await hackathonService.registerParticipant(
-        req.params.id,
-        req.user.id
+        hackathonId,
+        userId
     );
 
     res.status(201).json({
         success: true,
-        message: "Successfully registered for the hackathon",
-        registration
+        message: "Utilisateur inscrit avec succès au hackathon par l'administrateur.",
+        data: registration
     });
 });
 
-/**
- * DELETE /api/hackathons/:id/register
- */
-exports.unregisterParticipant = asyncHandler(async (req, res) => {
-    const result = await hackathonService.unregisterParticipant(
-        req.params.id,
-        req.user.id
-    );
-
-    res.status(200).json({
-        success: true,
-        message: result.message
-    });
-});
 
 /**
  * GET /api/hackathons/:id/solo-participants
@@ -130,6 +125,26 @@ exports.assignJudge = asyncHandler(async (req, res) => {
         assignment
     });
 
+});
+
+/**
+ * Check if authenticated user is registered in a hackathon
+ */
+exports.isParticipant= asyncHandler(async (req, res) => {
+    try {
+        const hackathonId = Number(req.params.id);
+        const userId = req.user.id;
+
+        const result = await hackathonService.isParticipant(
+            hackathonId,
+            userId
+        );
+    
+
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
 });
 
 /*
@@ -232,7 +247,10 @@ exports.getHackathonSubmissions = asyncHandler(async (req, res, next) => {
         const submissions =
             await hackathonService.getHackathonSubmissions(hackathonId);
 
-        res.json(submissions);
+        res.status(200).json({
+        success: true,
+        submissions
+    });
     } catch (err) {
         next(err);
     }
@@ -245,11 +263,50 @@ exports.getHackathonParticipants = asyncHandler(async (req, res, next) => {
         const participants =
             await hackathonService.getHackathonParticipants(hackathonId);
 
-        return res.status(200).json(participants);
+        res.status(200).json({
+        success: true,
+        participants
+    });
+
     } catch (error) {
+
         next(error);
     }
 })
+
+// user methods 
+/**
+ * POST /api/hackathons/:id/register
+ */
+exports.registerParticipant = asyncHandler(async (req, res) => {
+    const registration = await hackathonService.registerParticipant(
+        req.params.id,
+        req.user.id
+    );
+
+    res.status(201).json({
+        success: true,
+        message: "Successfully registered for the hackathon",
+        registration
+    });
+});
+
+/**
+ * DELETE /api/hackathons/:id/register
+ */
+exports.unregisterParticipant = asyncHandler(async (req, res) => {
+    const result = await hackathonService.unregisterParticipant(
+        req.params.id,
+        req.user.id
+    );
+
+    res.status(200).json({
+        success: true,
+        message: result.message
+    });
+});
+
+
 
 
 module.exports = {
@@ -258,6 +315,7 @@ module.exports = {
     createHackathon: exports.createHackathon,
     updateHackathon: exports.updateHackathon,
     deleteHackathon: exports.deleteHackathon,
+    assignUserByAdmin: exports.assignUserByAdmin,
     registerParticipant: exports.registerParticipant,
     unregisterParticipant: exports.unregisterParticipant,
     getSoloParticipants: exports.getSoloParticipants,
@@ -269,5 +327,6 @@ module.exports = {
     registerTeam: exports.registerTeam,
     unregisterTeam: exports.unregisterTeam,
     getHackathonSubmissions: exports.getHackathonSubmissions,
-    getHackathonParticipants: exports.getHackathonParticipants
+    getHackathonParticipants: exports.getHackathonParticipants,
+    isParticipant: exports.isParticipant
 };

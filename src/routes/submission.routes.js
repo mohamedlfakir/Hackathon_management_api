@@ -45,6 +45,15 @@ router.get(
 |--------------------------------------------------------------------------
 */
 
+// routes/submission.routes.js
+
+router.get(
+    "/hackathons/:hackathonId/my-submission",
+    authenticate,
+    authorize("PARTICIPANT"),
+    submissionController.getMySubmission
+);
+
 router.post(
     "/",
     authenticate,

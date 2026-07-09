@@ -7,10 +7,52 @@ async function findAll() {
     return db.any(`
         SELECT
             t.*,
-            h.title AS hackathon_title
+            h.title AS hackathon_title,
+
+            json_build_object(
+                'id', leader.id,
+                'username', leader.username,
+                'email', leader.email,
+                'first_name', leader.first_name,
+                'last_name', leader.last_name
+            ) AS leader,
+
+            COALESCE(
+                json_agg(
+                    DISTINCT jsonb_build_object(
+                        'id', member.id,
+                        'username', member.username,
+                        'email', member.email,
+                        'first_name', member.first_name,
+                        'last_name', member.last_name
+                    )
+                ) FILTER (WHERE member.id IS NOT NULL),
+                '[]'::json
+            ) AS members
+
         FROM teams t
+
         JOIN hackathons h
             ON h.id = t.hackathon_id
+
+        JOIN users leader
+            ON leader.id = t.leader_id
+
+        LEFT JOIN team_members tm
+            ON tm.team_id = t.id
+
+        LEFT JOIN users member
+            ON member.id = tm.user_id
+
+        GROUP BY
+            t.id,
+            h.title,
+            leader.id,
+            leader.username,
+            leader.email,
+            leader.first_name,
+            leader.last_name
+
         ORDER BY t.created_at DESC
     `);
 }
@@ -21,13 +63,51 @@ async function findAll() {
 async function findById(id) {
     return db.oneOrNone(
         `
-        SELECT
+         SELECT
             t.*,
-            h.title AS hackathon_title
+            h.title AS hackathon_title,
+
+            json_build_object(
+                'id', leader.id,
+                'username', leader.username,
+                'email', leader.email,
+                'first_name', leader.first_name,
+                'last_name', leader.last_name
+            ) AS leader,
+
+            COALESCE(
+                json_agg(
+                    DISTINCT jsonb_build_object(
+                        'id', member.id,
+                        'username', member.username,
+                        'email', member.email,
+                        'first_name', member.first_name,
+                        'last_name', member.last_name
+                    )
+                ) FILTER (WHERE member.id IS NOT NULL),
+                '[]'
+            ) AS members
+
         FROM teams t
+
         JOIN hackathons h
             ON h.id = t.hackathon_id
+
+        JOIN users leader
+            ON leader.id = t.leader_id
+
+        LEFT JOIN team_members tm
+            ON tm.team_id = t.id
+
+        LEFT JOIN users member
+            ON member.id = tm.user_id
+
         WHERE t.id = $1
+
+        GROUP BY
+            t.id,
+            h.title,
+            leader.id
         `,
         [id]
     );
@@ -36,25 +116,27 @@ async function findById(id) {
 /**
  * Create team
  */
-async function create(data) {
+async function create(data, userId) {
     return db.one(
         `
         INSERT INTO teams (
             hackathon_id,
-            captain_id,
+            leader_id,
             name,
             description,
-            avatar_path
+            avatar_path,
+            created_by
         )
-        VALUES ($1,$2,$3,$4,$5)
+        VALUES ($1,$2,$3,$4,$5,$6)
         RETURNING *;
         `,
         [
             data.hackathon_id,
-            data.captain_id,
+            userId,
             data.name,
             data.description,
-            data.avatar_path
+            data.avatar_path,
+            userId
         ]
     );
 }
@@ -109,6 +191,21 @@ async function joinTeam(teamId, userId) {
         )
         VALUES ($1, $2)
         RETURNING *
+        `,
+        [teamId, userId]
+    );
+}
+
+/**
+ * Remove member from team
+ */
+async function removeMember(teamId, userId) {
+    return db.none(
+        `
+        DELETE
+        FROM team_members
+        WHERE team_id = $1
+          AND user_id = $2
         `,
         [teamId, userId]
     );
@@ -175,12 +272,53 @@ async function findUserTeam(hackathonId, userId) {
     return db.oneOrNone(
         `
         SELECT
-            t.*
+            t.*,
+
+            json_build_object(
+                'id', leader.id,
+                'username', leader.username,
+                'email', leader.email,
+                'first_name', leader.first_name,
+                'last_name', leader.last_name
+            ) AS leader,
+
+            COALESCE(
+                json_agg(
+                    DISTINCT jsonb_build_object(
+                        'id', member.id,
+                        'username', member.username,
+                        'email', member.email,
+                        'first_name', member.first_name,
+                        'last_name', member.last_name
+                    )
+                ) FILTER (WHERE member.id IS NOT NULL),
+                '[]'::json
+            ) AS members
+
         FROM teams t
-        JOIN team_members tm
+
+        JOIN users leader
+            ON leader.id = t.leader_id
+
+        JOIN team_members tm_user
+            ON tm_user.team_id = t.id
+           AND tm_user.user_id = $2
+
+        LEFT JOIN team_members tm
             ON tm.team_id = t.id
+
+        LEFT JOIN users member
+            ON member.id = tm.user_id
+
         WHERE t.hackathon_id = $1
-        AND tm.user_id = $2
+
+        GROUP BY
+            t.id,
+            leader.id,
+            leader.username,
+            leader.email,
+            leader.first_name,
+            leader.last_name
         `,
         [hackathonId, userId]
     );
@@ -196,5 +334,6 @@ module.exports = {
     leaveTeam,
     getMembers,
     isMember,
-    findUserTeam
+    findUserTeam,
+    removeMember
 };

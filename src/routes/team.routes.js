@@ -71,18 +71,27 @@ router.delete(
 );
 
 router.post(
-    "/:id/join",
+    "/:id/add-member",
     authenticate,
-    authorize("PARTICIPANT"),
+    authorize("ADMIN", "ORGANIZER", "PARTICIPANT"),
     teamIdValidator,
     validate,
     teamController.joinTeam
 );
 
 router.delete(
+    "/:id/members/:userId",
+    authenticate,
+    authorize("ADMIN", "ORGANIZER", "PARTICIPANT"),
+    teamIdValidator,
+    validate,
+    teamController.removeMember
+);
+
+router.delete(
     "/:id/leave",
     authenticate,
-    authorize("PARTICIPANT"),
+    authorize("PARTICIPANT","ADMIN", "ORGANIZER",),
     teamIdValidator,
     validate,
     teamController.leaveTeam
@@ -104,6 +113,13 @@ router.put(
     teamIdValidator,
     validate,
     teamController.updateAvatar
+);
+
+router.get(
+    "/hackathons/:hackathonId/my-team",
+    authenticate,
+    authorize("PARTICIPANT"),
+    teamController.getUserTeam
 );
 
 module.exports = router;

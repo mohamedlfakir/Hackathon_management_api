@@ -51,10 +51,10 @@ async function createTeam(data, userId) {
     const team = await teamRepository.create({
         ...data,
         captain_id: userId
-    });
+    }, userId);
 
     await teamRepository.joinTeam(team.id, userId);
-
+    await hackathonRepository.registerTeam(hackathon.id,team.id)
     return team;
 
 }
@@ -123,6 +123,13 @@ async function joinTeam(teamId, userId) {
         throw new AppError("Team not found", 404);
     }
 
+    if (
+        req.user.role === "PARTICIPANT" &&
+        team.leader_id !== req.user.id
+    ) {
+        throw new AppError("Only the team leader can add members", 403);
+    }
+
     const alreadyMember = await teamRepository.isMember(
         teamId,
         userId
@@ -130,7 +137,7 @@ async function joinTeam(teamId, userId) {
 
     if (alreadyMember) {
         throw new AppError(
-            "You are already a member of this team",
+             "User is already a member of this team",
             409
         );
     }
@@ -142,7 +149,7 @@ async function joinTeam(teamId, userId) {
 
     if (existingTeam) {
         throw new AppError(
-            "You already belong to another team in this hackathon",
+            "User already belongs to another team in this hackathon",
             409
         );
     }
@@ -153,6 +160,56 @@ async function joinTeam(teamId, userId) {
     );
 
 }
+
+
+/**
+ * Remove member from team
+ */
+async function removeMember(teamId, userId, currentUser) {
+
+    const team = await teamRepository.findById(teamId);
+
+    if (!team) {
+        throw new AppError("Team not found", 404);
+    }
+
+    // Participants can only manage their own team
+    if (
+        currentUser.role === "PARTICIPANT" &&
+        team.leader_id !== currentUser.id
+    ) {
+        throw new AppError(
+            "Only the team leader can remove members",
+            403
+        );
+    }
+
+    const member = await teamRepository.isMember(
+        teamId,
+        userId
+    );
+
+    if (!member) {
+        throw new AppError(
+            "User is not a member of this team",
+            404
+        );
+    }
+
+    // Prevent removing the leader
+    if (team.leader_id === userId) {
+        throw new AppError(
+            "The team leader cannot be removed",
+            400
+        );
+    }
+
+    await teamRepository.removeMember(
+        teamId,
+        userId
+    );
+}
+
 
 /**
  * Leave team
@@ -232,6 +289,17 @@ async function updateAvatar(teamId, userId, avatarPath) {
 
 }
 
+/**
+ * Get user's team in a hackathon
+ */
+async function getUserTeam(hackathonId, userId) {
+    return await teamRepository.findUserTeam(
+        hackathonId,
+        userId
+    );
+}
+
+
 module.exports = {
     getAllTeams,
     getTeamById,
@@ -241,5 +309,7 @@ module.exports = {
     joinTeam,
     leaveTeam,
     getMembers,
-    updateAvatar
+    getUserTeam,
+    updateAvatar,
+    removeMember,
 };

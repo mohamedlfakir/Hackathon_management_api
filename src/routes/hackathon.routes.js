@@ -62,10 +62,109 @@ router.put(
 router.delete(
     "/:id",
     authenticate,
-    authorize("ADMIN", "ORGANIZER"),
+    authorize("ADMIN"),
     hackathonIdValidator,
     validate,
     hackathonController.deleteHackathon
+);
+
+router.post(
+    "/:id/assign-user",
+    authenticate,
+    authorize("ADMIN", "ORGANIZER"), 
+    hackathonIdValidator,
+    // Vous pouvez ajouter ici un validateur pour req.body.userId si vous en avez un
+    validate,
+    hackathonController.assignUserByAdmin
+);
+
+
+router.get(
+    "/:id/solo-participants",
+    authenticate,
+    authorize("ADMIN", "ORGANIZER"),
+    hackathonIdValidator,
+    validate,
+    hackathonController.getSoloParticipants
+);
+
+// Assign a judge
+router.post(
+    "/:id/judges",
+    authenticate,
+    authorize("ADMIN", "ORGANIZER"),
+    hackathonIdValidator,
+    assignJudgeValidator,
+    validate,
+    hackathonController.assignJudge
+);
+
+// Remove a judge
+router.delete(
+    "/:id/judges/:judgeId",
+    authenticate,
+    authorize("ADMIN", "ORGANIZER"),
+    hackathonIdValidator,
+    judgeIdValidator,
+    validate,
+    hackathonController.removeJudge
+);
+
+
+router.get(
+    "/:id/is-participant",
+    authenticate,   
+    authorize("PARTICIPANT"),
+    hackathonIdValidator,
+    validate,
+    hackathonController.isParticipant
+);
+
+// List judges for a hackathon
+router.get(
+    "/:id/judges",
+    authenticate,
+    authorize("ADMIN", "ORGANIZER"),
+    hackathonIdValidator,
+    validate,
+    hackathonController.getHackathonJudges
+);
+
+// List hackathons assigned to a judge
+router.get(
+    "/judges/:judgeId/hackathons",
+    authenticate,
+    authorize("ADMIN", "ORGANIZER"),
+    judgeIdValidator,
+    validate,
+    hackathonController.getJudgeHackathons
+);
+
+router.get("/:id/teams",
+    authenticate,
+    authorize("ADMIN", "ORGANIZER"), 
+    hackathonController.getHackathonTeams);
+
+router.post("/:id/teams",
+    authenticate,
+    authorize("ADMIN", "ORGANIZER"),
+     hackathonController.registerTeam);
+
+router.delete("/:id/teams/:teamId",
+     authenticate,
+    authorize("ADMIN", "ORGANIZER"), 
+    hackathonController.unregisterTeam);
+
+router.get("/:id/submissions", 
+    authenticate,
+    authorize("ADMIN", "ORGANIZER"), 
+    hackathonController.getHackathonSubmissions);    
+
+router.get(
+    "/:id/participants",
+    authenticate,
+    authorize("ADMIN", "ORGANIZER"),
+    hackathonController.getHackathonParticipants
 );
 
 /*
@@ -92,67 +191,6 @@ router.delete(
     hackathonController.unregisterParticipant
 );
 
-router.get(
-    "/:id/solo-participants",
-    authenticate,
-    authorize("ADMIN", "ORGANIZER"),
-    hackathonIdValidator,
-    validate,
-    hackathonController.getSoloParticipants
-);
-
-// Assign a judge
-router.post(
-    "/:id/judges",
-    authenticate,
-    authorize("ADMIN"),
-    hackathonIdValidator,
-    assignJudgeValidator,
-    validate,
-    hackathonController.assignJudge
-);
-
-// Remove a judge
-router.delete(
-    "/:id/judges/:judgeId",
-    authenticate,
-    authorize("ADMIN"),
-    hackathonIdValidator,
-    judgeIdValidator,
-    validate,
-    hackathonController.removeJudge
-);
-
-// List judges for a hackathon
-router.get(
-    "/:id/judges",
-    authenticate,
-    authorize("ADMIN"),
-    hackathonIdValidator,
-    validate,
-    hackathonController.getHackathonJudges
-);
-
-// List hackathons assigned to a judge
-router.get(
-    "/judges/:judgeId/hackathons",
-    authenticate,
-    authorize("ADMIN"),
-    judgeIdValidator,
-    validate,
-    hackathonController.getJudgeHackathons
-);
-
-router.get("/:id/teams", hackathonController.getHackathonTeams);
-router.post("/:id/teams", hackathonController.registerTeam);
-router.delete("/:id/teams/:teamId", hackathonController.unregisterTeam);
-
-router.get("/:id/submissions", hackathonController.getHackathonSubmissions);    
-
-router.get(
-    "/:id/participants",
-    hackathonController.getHackathonParticipants
-);
 
 module.exports = router;
 

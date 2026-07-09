@@ -58,6 +58,22 @@ async function findByTeam(teamId) {
 }
 
 /**
+ * Get submission by user
+ */
+
+async function findByUser(hackathonId, userId) {
+    return db.oneOrNone(
+        `
+        SELECT *
+        FROM submissions
+        WHERE hackathon_id = $1
+          AND user_id = $2
+        `,
+        [hackathonId, userId]
+    );
+}
+
+/**
  * Create submission
  */
 async function create(data) {
@@ -69,9 +85,10 @@ async function create(data) {
             description,
             github_url,
             figma_url,
-            presentation_path
+            presentation_path,
+            hackathon_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
         `,
         [
@@ -80,7 +97,8 @@ async function create(data) {
             data.description,
             data.github_url,
             data.figma_url,
-            data.presentation_path
+            data.presentation_path,
+            data.hackathon_id
         ]
     );
 }
@@ -188,6 +206,7 @@ async function updateFigmaUrl(id, figmaUrl) {
     );
 }
 
+
 module.exports = {
     findAll,
     findById,
@@ -198,5 +217,6 @@ module.exports = {
     deleteSubmission,
     updatePresentation,
     updateGithubUrl,
-    updateFigmaUrl
+    updateFigmaUrl,
+    findByUser
 };

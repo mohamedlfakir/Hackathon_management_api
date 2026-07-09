@@ -27,6 +27,24 @@ exports.getSubmissionById = asyncHandler(async (req, res) => {
 });
 
 /**
+ * Get authenticated user's submission
+ */
+exports.getMySubmission= asyncHandler(async (req, res, next) => {
+    try {
+        const hackathonId = Number(req.params.hackathonId);
+
+        const submission = await submissionService.getMySubmission(
+            hackathonId,
+            req.user.id
+        );
+
+        res.status(200).json(submission);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
  * POST /api/submissions
  */
 exports.createSubmission = asyncHandler(async (req, res) => {
@@ -142,5 +160,6 @@ module.exports = {
     deleteSubmission: exports.deleteSubmission,
     updateGithubUrl: exports.updateGithubUrl,
     updateFigmaUrl: exports.updateFigmaUrl,
-    updatePresentation: exports.updatePresentation
+    updatePresentation: exports.updatePresentation,
+    getMySubmission: exports.getMySubmission
 };
