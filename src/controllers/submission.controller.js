@@ -152,6 +152,32 @@ exports.updatePresentation = asyncHandler(async (req, res) => {
     });
 });
 
+exports.getSubmissionRanking = asyncHandler(async (req, res) => {
+
+    const ranking = await submissionService.getSubmissionRanking(
+        req.params.hackathonId
+    );
+
+    res.json({
+        success: true,
+        data: ranking
+    });
+
+});
+
+exports.getTopSubmissions = asyncHandler(async (req, res) => {
+
+    const submissions = await submissionService.getTopSubmissions(
+        req.params.hackathonId
+    );
+
+    res.json({
+        success: true,
+        data: submissions
+    });
+
+});
+
 module.exports = {
     getAllSubmissions: exports.getAllSubmissions,
     getSubmissionById: exports.getSubmissionById,
@@ -161,5 +187,7 @@ module.exports = {
     updateGithubUrl: exports.updateGithubUrl,
     updateFigmaUrl: exports.updateFigmaUrl,
     updatePresentation: exports.updatePresentation,
-    getMySubmission: exports.getMySubmission
+    getMySubmission: exports.getMySubmission,
+    getSubmissionRanking : exports.getSubmissionRanking,
+    getTopSubmissions : exports.getTopSubmissions
 };

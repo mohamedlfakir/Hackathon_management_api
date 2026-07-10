@@ -167,6 +167,7 @@ router.get(
     hackathonController.getHackathonParticipants
 );
 
+
 /*
 |--------------------------------------------------------------------------
 | Participant Routes

@@ -318,14 +318,51 @@ async function updateFigmaUrl(id, userId, figmaUrl) {
     return await submissionRepository.updateFigmaUrl(id, figmaUrl);
 }
 
+/**
+ * Get submission ranking for a hackathon
+ */
+async function getSubmissionRanking(hackathonId) {
+
+    const hackathon = await hackathonRepository.findById(hackathonId);
+
+    if (!hackathon) {
+        throw new AppError("Hackathon not found", 404);
+    }
+
+    return await submissionRepository.getSubmissionRanking(hackathonId);
+}
+
+/**
+ * Get top 3 submissions
+ */
+async function getTopSubmissions(hackathonId) {
+
+    const hackathon = await hackathonRepository.findById(hackathonId);
+
+    if (!hackathon) {
+        throw new AppError("Hackathon not found", 404);
+    }
+
+    if (hackathon.status !== "FINISHED") {
+        throw new AppError(
+            "Results are available only after the hackathon has finished",
+            403
+        );
+    }
+
+    return await submissionRepository.getTopSubmissions(hackathonId);
+}
+
 module.exports = {
     getAllSubmissions,
     getSubmissionById,
-     getMySubmission,
+    getMySubmission,
     createSubmission,
     updateSubmission,
     deleteSubmission,
     updatePresentation,
     updateGithubUrl,
-    updateFigmaUrl
+    updateFigmaUrl,
+    getSubmissionRanking,
+    getTopSubmissions
 };

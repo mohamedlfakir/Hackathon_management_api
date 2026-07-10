@@ -21,6 +21,11 @@ const {
     updateFigmaValidator
 } = require("../validators/submission.validator");
 
+
+const {
+    hackathonIdValidator
+} = require("../validators/hackathon.validator");
+
 /*
 |--------------------------------------------------------------------------
 | Public Routes
@@ -42,6 +47,11 @@ router.get(
     submissionIdValidator,
     validate,
     submissionController.getSubmissionById
+);
+
+router.get(
+    "/:hackathonId/top-submissions",
+    submissionController.getTopSubmissions
 );
 
 /*
@@ -123,4 +133,12 @@ router.put(
     submissionController.updatePresentation
 );
 
+
+router.get(
+    "/:hackathonId/ranking",
+    authenticate,
+    authorize("ADMIN", "ORGANIZER"),
+    submissionController.getSubmissionRanking
+);
 module.exports = router;
+

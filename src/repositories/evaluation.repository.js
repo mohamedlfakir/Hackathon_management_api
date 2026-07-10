@@ -4,8 +4,7 @@ const db = require("../config/database");
  * Get all evaluations
  */
 async function findAll() {
-    return db.any(
-        `
+    return db.any(`
         SELECT
             e.*,
             s.title AS submission_title,
@@ -16,16 +15,14 @@ async function findAll() {
         JOIN users u
             ON u.id = e.judge_id
         ORDER BY e.created_at DESC
-        `
-    );
+    `);
 }
 
 /**
  * Get evaluation by id
  */
 async function findById(id) {
-    return db.oneOrNone(
-        `
+    return db.oneOrNone(`
         SELECT
             e.*,
             s.title AS submission_title,
@@ -36,241 +33,219 @@ async function findById(id) {
         JOIN users u
             ON u.id = e.judge_id
         WHERE e.id = $1
-        `,
-        [id]
-    );
+    `, [id]);
 }
 
 /**
- * Check if a judge already evaluated a submission
+ * Find evaluation by judge and submission
  */
 async function findByJudgeAndSubmission(judgeId, submissionId) {
-    return db.oneOrNone(
-        `
+    return db.oneOrNone(`
         SELECT *
         FROM evaluations
         WHERE judge_id = $1
         AND submission_id = $2
-        `,
-        [judgeId, submissionId]
-    );
+    `, [judgeId, submissionId]);
 }
 
 /**
- * Create evaluation with scores
- */async function createEvaluation(data) {
+ * Create evaluation
+ */
+async function createEvaluation(data) {
     return db.one(`
         INSERT INTO evaluations (
             submission_id,
             judge_id,
+            comment
+        )
+        VALUES ($1,$2,$3)
+        RETURNING *
+    `, [
+        data.submission_id,
+        data.judge_id,
+        data.comment ?? null
+    ]);
+}
+
+/**
+ * Update evaluation comment
+ */
+async function updateEvaluation(id, comment) {
+    return db.one(`
+        UPDATE evaluations
+        SET comment = $2
+        WHERE id = $1
+        RETURNING *
+    `, [id, comment]);
+}
+
+/**
+ * Create one criterion score
+ */
+async function createScore(data) {
+    return db.one(`
+        INSERT INTO evaluations_scores (
+            evaluation_id,
             criterion_id,
             score,
             comment
         )
-        VALUES ($1,$2,$3,$4,$5)
+        VALUES ($1,$2,$3,$4)
         RETURNING *
     `, [
-        data.submission_id,
-        data.judge_id,
+        data.evaluation_id,
         data.criterion_id,
         data.score,
-        data.comment
+        data.comment ?? null
     ]);
-}
-
-
-async function updateEvaluation(data) {
-    return db.one(`
-        UPDATE evaluations
-        SET
-            score = $4,
-            comment = $5
-        WHERE
-            submission_id = $1
-            AND judge_id = $2
-            AND criterion_id = $3
-        RETURNING *
-    `, [
-        data.submission_id,
-        data.judge_id,
-        data.criterion_id,
-        data.score,
-        data.comment
-    ]);
-}
-
-async function getSubmissionEvaluations(submissionId) {
-    return db.any(`
-        SELECT
-            e.id,
-            e.score,
-            e.comment,
-            e.created_at,
-
-            c.id AS criterion_id,
-            c.code,
-            c.name,
-            c.max_score,
-
-            u.id AS judge_id,
-            u.username,
-            u.first_name,
-            u.last_name
-
-        FROM evaluations e
-        JOIN evaluation_criteria c
-            ON c.id = e.criterion_id
-        JOIN users u
-            ON u.id = e.judge_id
-
-        WHERE e.submission_id = $1
-
-        ORDER BY c.id
-    `,[submissionId]);
-}
-
-async function getJudgeEvaluations(submissionId, judgeId) {
-    return db.any(`
-        SELECT
-            e.id,
-            e.criterion_id,
-            ec.code,
-            ec.name,
-            ec.max_score,
-            e.score,
-            e.comment,
-            e.created_at
-        FROM evaluations e
-        JOIN evaluation_criteria ec
-            ON ec.id = e.criterion_id
-        WHERE
-            e.submission_id = $1
-            AND e.judge_id = $2
-        ORDER BY ec.id
-    `,[submissionId, judgeId]);
-}
-
-
-/**
- * Get scores of an evaluation
- */
-async function getScores(submissionId) {
-    return db.any(
-         `
-        SELECT
-            e.id,
-            e.judge_id,
-            u.first_name,
-            u.last_name,
-            e.criterion_id,
-            ec.code,
-            ec.name,
-            ec.max_score,
-            e.score,
-            e.comment,
-            e.created_at
-        FROM evaluations e
-        JOIN evaluation_criteria ec
-            ON ec.id = e.criterion_id
-        JOIN users u
-            ON u.id = e.judge_id
-        WHERE e.submission_id = $1
-        ORDER BY
-            u.last_name,
-            ec.id
-        `,
-        [submissionId]
-    );
-}
-
-/**
- * Update comments
- */
-async function updateComments(id, comments) {
-    return db.one(
-        `
-        UPDATE evaluations
-        SET
-            comments = $2,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1
-        RETURNING *
-        `,
-        [id, comments]
-    );
 }
 
 /**
  * Update one criterion score
  */
-async function updateScore(evaluationId, criterionId, score) {
-    return db.none(
-        `
-        UPDATE evaluation_scores
-        SET score = $3
-        WHERE evaluation_id = $1
-        AND criterion_id = $2
-        `,
-        [
-            evaluationId,
-            criterionId,
-            score
-        ]
-    );
+async function updateScore(data) {
+    return db.one(`
+        UPDATE evaluations_scores
+        SET
+            score = $3,
+            comment = $4
+        WHERE
+            evaluation_id = $1
+            AND criterion_id = $2
+        RETURNING *
+    `, [
+        data.evaluation_id,
+        data.criterion_id,
+        data.score,
+        data.comment ?? null
+    ]);
 }
 
 /**
- * Update evaluation and all scores
+ * Get all scores of an evaluation
  */
-/*
-async function updateEvaluation(id, comments, scores) {
+async function getScores(evaluationId) {
+    return db.any(`
+        SELECT
+            es.id,
+            es.score,
+            es.comment,
 
-    return db.tx(async t => {
+            ec.id AS criterion_id,
+            ec.code,
+            ec.name,
+            ec.max_score
 
-        const evaluation = await t.one(
-            `
-            UPDATE evaluations
-            SET
-                comments = $2,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = $1
-            RETURNING *
-            `,
-            [id, comments]
-        );
+        FROM evaluations_scores es
+        JOIN evaluation_criteria ec
+            ON ec.id = es.criterion_id
 
-        for (const score of scores) {
+        WHERE es.evaluation_id = $1
 
-            await t.none(
-                `
-                UPDATE evaluation_scores
-                SET score = $3
-                WHERE evaluation_id = $1
-                AND criterion_id = $2
-                `,
-                [
-                    id,
-                    score.criterion_id,
-                    score.score
-                ]
-            );
-
-        }
-
-        return evaluation;
-
-    });
-
+        ORDER BY ec.id
+    `, [evaluationId]);
 }
-*/
+
 /**
  * Get all evaluations for a submission
  */
+async function getSubmissionEvaluations(submissionId) {
+    return db.any(`
+       SELECT
+            u.id AS judge_id,
+            u.first_name,
+            u.last_name,
+            u.avatar_path AS judge_avatar,
 
+            e.created_at AS submitted_at,
+
+            COALESCE(SUM(es.score), 0) AS total_score,
+
+            json_agg(
+                json_build_object(
+                    'criterion_id', ec.id,
+                    'score', es.score,
+                    'comment', es.comment
+                )
+                ORDER BY ec.id
+            ) AS scores
+
+        FROM evaluations e
+
+        JOIN users u
+            ON u.id = e.judge_id
+
+        JOIN evaluations_scores es
+            ON es.evaluation_id = e.id
+
+        JOIN evaluation_criteria ec
+            ON ec.id = es.criterion_id
+
+        WHERE e.submission_id = $1
+
+        GROUP BY
+            e.id,
+            u.id,
+            u.first_name,
+            u.last_name,
+            u.avatar_path,
+            e.created_at
+
+        ORDER BY e.created_at
+    `, [submissionId]);
+}
+
+/**
+ * Get one judge evaluation
+ */
+async function getJudgeEvaluations(submissionId, judgeId) {
+    return db.any(`
+        SELECT
+            e.id AS evaluation_id,
+            e.created_at,
+
+            ec.id AS criterion_id,
+            ec.code,
+            ec.name,
+            ec.max_score,
+
+            es.score,
+            es.comment
+
+        FROM evaluations e
+
+        JOIN evaluations_scores es
+            ON es.evaluation_id = e.id
+
+        JOIN evaluation_criteria ec
+            ON ec.id = es.criterion_id
+
+        WHERE
+            e.submission_id = $1
+            AND e.judge_id = $2
+
+        ORDER BY ec.id
+    `, [submissionId, judgeId]);
+}
+
+/**
+ * Find evaluation (parent)
+ */
+async function findEvaluation(submissionId, judgeId) {
+    return db.oneOrNone(`
+        SELECT *
+        FROM evaluations
+        WHERE
+            submission_id = $1
+            AND judge_id = $2
+    `, [submissionId, judgeId]);
+}
+
+/**
+ * Get all evaluations of a submission
+ */
 async function findBySubmission(submissionId) {
-
-    return db.any(
-        `
+    return db.any(`
         SELECT
             e.*,
             u.username,
@@ -281,29 +256,22 @@ async function findBySubmission(submissionId) {
             ON u.id = e.judge_id
         WHERE e.submission_id = $1
         ORDER BY e.created_at
-        `,
-        [submissionId]
-    );
-
+    `, [submissionId]);
 }
 
 /**
  * Delete evaluation
  */
 async function deleteEvaluation(id) {
-    return db.result(
-        `
+    return db.result(`
         DELETE
         FROM evaluations
         WHERE id = $1
-        `,
-        [id]
-    );
+    `, [id]);
 }
 
 /**
- * 
- * Get detailed evaluation by id, including scores
+ * Detailed evaluation
  */
 async function findDetailedById(id) {
 
@@ -316,9 +284,11 @@ async function findDetailedById(id) {
     evaluation.scores = await getScores(id);
 
     return evaluation;
-
 }
 
+/**
+ * Get all criteria
+ */
 async function getCriteria() {
     return db.any(`
         SELECT
@@ -331,6 +301,9 @@ async function getCriteria() {
     `);
 }
 
+/**
+ * Get criterion by id
+ */
 async function getCriterionById(id) {
     return db.oneOrNone(`
         SELECT
@@ -343,30 +316,20 @@ async function getCriterionById(id) {
     `, [id]);
 }
 
-async function findEvaluation(submissionId, judgeId, criterionId) {
-    return db.oneOrNone(`
-        SELECT *
-        FROM evaluations
-        WHERE submission_id = $1
-          AND judge_id = $2
-          AND criterion_id = $3
-    `, [submissionId, judgeId, criterionId]);
-}
-
 module.exports = {
     findAll,
     findById,
     findByJudgeAndSubmission,
     findEvaluation,
     createEvaluation,
+    updateEvaluation,
+    createScore,
+    updateScore,
+    getScores,
     getSubmissionEvaluations,
     getJudgeEvaluations,
-    getScores,
-    updateComments,
-    updateScore,
-    deleteEvaluation,
     findBySubmission,
-    updateEvaluation,
+    deleteEvaluation,
     findDetailedById,
     getCriteria,
     getCriterionById,

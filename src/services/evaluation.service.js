@@ -29,6 +29,16 @@ async function getEvaluationById(id) {
 /**
  * Create evaluation
  */
+
+async function createEvaluation(data, judgeId) {
+    return evaluateSubmission(
+        data.submission_id,
+        judgeId,
+        data.evaluations
+    );
+}
+
+/*
 async function createEvaluation(data, judgeId) {
 
     const submission = await submissionRepository.findById(data.submission_id);
@@ -88,7 +98,7 @@ async function createEvaluation(data, judgeId) {
         data.scores
     );
 }
-
+*/
 /**
  * Update evaluation
  */
@@ -143,6 +153,94 @@ async function getCriteria() {
     return evaluationRepository.getCriteria();
 }
 
+
+async function evaluateSubmission(submissionId, judgeId, evaluations) {
+    
+    const submission = await submissionRepository.findById(submissionId);
+
+    if (!submission) {
+        throw new AppError("Submission not found", 404);
+    }
+
+    let evaluation = await evaluationRepository.findEvaluation(
+        submissionId,
+        judgeId
+    );
+
+    if (!evaluation) {
+
+        evaluation = await evaluationRepository.createEvaluation({
+            submission_id: submissionId,
+            judge_id: judgeId,
+            comment: null
+        });
+
+        for (const item of evaluations) {
+
+            const criterion =
+                await evaluationRepository.getCriterionById(
+                    item.criterion_id
+                );
+
+            if (!criterion) {
+                throw new AppError("Criterion not found", 404);
+            }
+
+            if (
+                item.score < 0 ||
+                item.score > criterion.max_score
+            ) {
+                throw new AppError(
+                    `Score must be between 0 and ${criterion.max_score}`,
+                    400
+                );
+            }
+
+            await evaluationRepository.createScore({
+                evaluation_id: evaluation.id,
+                criterion_id: item.criterion_id,
+                score: item.score,
+                comment: item.comment
+            });
+        }
+
+    } else {
+
+        for (const item of evaluations) {
+
+            const criterion =
+                await evaluationRepository.getCriterionById(
+                    item.criterion_id
+                );
+
+            if (!criterion) {
+                throw new AppError("Criterion not found", 404);
+            }
+
+            if (
+                item.score < 0 ||
+                item.score > criterion.max_score
+            ) {
+                throw new AppError(
+                    `Score must be between 0 and ${criterion.max_score}`,
+                    400
+                );
+            }
+
+            await evaluationRepository.updateScore({
+                evaluation_id: evaluation.id,
+                criterion_id: item.criterion_id,
+                score: item.score,
+                comment: item.comment
+            });
+        }
+    }
+
+    return evaluation;
+
+}
+
+/*
 async function evaluateSubmission(submissionId, judgeId, evaluations) {
 
     for (const item of evaluations) {
@@ -191,11 +289,38 @@ async function evaluateSubmission(submissionId, judgeId, evaluations) {
 
     return true;
 }
-
+*/
 
 /**
  * Get all evaluations for a submission
  */
+/*
+async function getSubmissionEvaluations(submissionId) {
+    const submission = await submissionRepository.findById(submissionId);
+
+    if (!submission) {
+        throw new AppError("Submission not found", 404);
+    }
+
+    return await evaluationRepository.getSubmissionEvaluations(submissionId);
+}
+*/
+
+
+async function getSubmissionEvaluations(submissionId) {
+
+    const submission = await submissionRepository.findById(submissionId);
+
+    if (!submission) {
+        throw new AppError("Submission not found", 404);
+    }
+
+    return await evaluationRepository.getSubmissionEvaluations(
+        submissionId
+    );
+}
+
+/*
 async function getSubmissionEvaluations(submissionId) {
 
     const submission = await submissionRepository.findById(submissionId);
@@ -205,7 +330,7 @@ async function getSubmissionEvaluations(submissionId) {
     }
 
     const evaluations =
-        await evaluationRepository.findBySubmission(submissionId);
+        await evaluationRepository.getSubmissionEvaluations(submissionId);
 
     for (const evaluation of evaluations) {
         evaluation.scores =
@@ -214,7 +339,7 @@ async function getSubmissionEvaluations(submissionId) {
 
     return evaluations;
 }
-
+*/
 /**
  * Get all scores for a submission by a judge
  */
