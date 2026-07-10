@@ -1,6 +1,8 @@
 const userService = require("../services/user.service");
 const asyncHandler = require("../utils/asyncHandler");
 
+const AppError = require("../utils/AppError");
+
 /**
  * GET /api/users
  */

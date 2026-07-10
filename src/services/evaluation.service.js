@@ -357,6 +357,36 @@ async function getJudgeEvaluation(submissionId, judgeId) {
     );
 }
 
+
+/**
+ * Get submissions pending evaluation
+ */
+async function getPendingSubmissions(judgeId) {
+    return await evaluationRepository.getPendingSubmissions(judgeId);
+}
+
+/**
+ * Get total pending submissions
+ */
+async function getPendingSubmissionsCount(judgeId) {
+    return await evaluationRepository.countPendingSubmissions(judgeId);
+}
+
+/**
+ * Get evaluated submissions
+ */
+async function getEvaluatedSubmissions(judgeId) {
+    return await evaluationRepository.getEvaluatedSubmissions(judgeId);
+}
+
+/**
+ * Get total evaluated submissions
+ */
+async function getEvaluatedSubmissionsCount(judgeId) {
+    return await evaluationRepository.countEvaluatedSubmissions(judgeId);
+}
+
+
 module.exports = {
     getAllEvaluations,
     getEvaluationById,
@@ -366,5 +396,9 @@ module.exports = {
     getSubmissionEvaluations,
     getCriteria,
     evaluateSubmission,
-    getJudgeEvaluation
+    getJudgeEvaluation,
+    getPendingSubmissions,
+    getPendingSubmissionsCount,
+    getEvaluatedSubmissions,
+    getEvaluatedSubmissionsCount
 };

@@ -19,6 +19,15 @@ const submissionIdValidator = [
 ];
 
 /**
+ * Validate judge ID
+ */
+const judgeIdValidator = [
+    param("judgeId")
+        .isInt({ min: 1 })
+        .withMessage("Evaluation ID must be a positive integer")
+];
+
+/**
  * Create evaluation
  */
 const createEvaluationValidator = [

@@ -143,9 +143,17 @@ router.get(
     hackathonController.getHackathonJudges
 );
 
+
+router.get(
+    "/judges/my",
+    authenticate,
+    authorize("JUDGE"),
+    hackathonController.getMyAssignedHackathons
+);
+
 // List hackathons assigned to a judge
 router.get(
-    "/judges/:judgeId/hackathons",
+    "/judges/:judgeId",
     authenticate,
     authorize("ADMIN", "ORGANIZER","JUDGE"),
     judgeIdValidator,

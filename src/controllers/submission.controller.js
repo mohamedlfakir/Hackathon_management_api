@@ -178,6 +178,7 @@ exports.getTopSubmissions = asyncHandler(async (req, res) => {
 
 });
 
+
 module.exports = {
     getAllSubmissions: exports.getAllSubmissions,
     getSubmissionById: exports.getSubmissionById,
@@ -189,5 +190,6 @@ module.exports = {
     updatePresentation: exports.updatePresentation,
     getMySubmission: exports.getMySubmission,
     getSubmissionRanking : exports.getSubmissionRanking,
-    getTopSubmissions : exports.getTopSubmissions
+    getTopSubmissions : exports.getTopSubmissions,
+
 };

@@ -9,6 +9,7 @@ const authorize = require("../middleware/authorize.middleware");
 const validate = require("../middleware/validate.middleware");
 
 const {
+    judgeIdValidator,
     evaluationIdValidator,
     submissionIdValidator,
     createEvaluationValidator,
@@ -96,6 +97,77 @@ router.delete(
     validate,
     evaluationController.deleteEvaluation
 );
+
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated Judge Routes
+|--------------------------------------------------------------------------
+*/
+
+// My pending submissions
+router.get(
+    "/my/pending-submissions",
+    authenticate,
+    authorize("JUDGE"),
+    evaluationController.getMyPendingSubmissions
+);
+
+// My pending submissions count
+router.get(
+    "/my/pending-submissions/count",
+    authenticate,
+    authorize("JUDGE"),
+    evaluationController.getMyPendingSubmissionsCount
+);
+
+// My evaluated submissions
+router.get(
+    "/my/evaluated-submissions",
+    authenticate,
+    authorize("JUDGE"),
+    evaluationController.getMyEvaluatedSubmissions
+);
+
+// My evaluated submissions count
+router.get(
+    "/my/evaluated-submissions/count",
+    authenticate,
+    authorize("JUDGE"),
+    evaluationController.getMyEvaluatedSubmissionsCount
+);
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Judge Evaluation Routes
+|--------------------------------------------------------------------------
+*/
+
+// Pending submissions (Admin)
+/*
+router.get(
+    "/judges/:judgeId/pending-submissions",
+    authenticate,
+    authorize("ADMIN"),
+    judgeIdValidator,
+    validate,
+    evaluationController.getPendingSubmissions
+);
+
+
+// Evaluated submissions (Admin)
+router.get(
+    "/judges/:judgeId/evaluated-submissions",
+    authenticate,
+    authorize("ADMIN"),
+    judgeIdValidator,
+    validate,
+    evaluationController.getEvaluatedSubmissions
+);*/
+
+
 
 
 

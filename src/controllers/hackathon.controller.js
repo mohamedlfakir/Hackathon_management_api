@@ -264,6 +264,23 @@ exports.getHackathonJudges = asyncHandler(async (req, res) => {
 /*
 * GET /api/judges/:judgeId/hackathons
 */
+exports.getMyAssignedHackathons = asyncHandler(async (req, res) => {
+
+    const hackathons = await hackathonService.getJudgeHackathons(
+        req.user.id
+    );
+
+    res.status(200).json({
+        success: true,
+        hackathons
+    });
+
+});
+
+
+/*
+* GET /api/judges/:judgeId/hackathons
+*/
 exports.getJudgeHackathons = asyncHandler(async (req, res) => {
 
     const hackathons = await hackathonService.getJudgeHackathons(
@@ -411,5 +428,6 @@ module.exports = {
     unregisterTeam: exports.unregisterTeam,
     getHackathonSubmissions: exports.getHackathonSubmissions,
     getHackathonParticipants: exports.getHackathonParticipants,
-    isParticipant: exports.isParticipant
+    isParticipant: exports.isParticipant,
+    getMyAssignedHackathons : exports.getMyAssignedHackathons,
 };

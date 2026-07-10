@@ -196,7 +196,7 @@ async function getSubmissionEvaluations(submissionId) {
 }
 
 /**
- * Get one judge evaluation
+ * Get one judge evaluations
  */
 async function getJudgeEvaluations(submissionId, judgeId) {
     return db.any(`
@@ -316,6 +316,186 @@ async function getCriterionById(id) {
     `, [id]);
 }
 
+
+/**
+ * Get submissions assigned to a judge that still need evaluation
+ */
+async function getPendingSubmissions(judgeId) {
+    return db.any(`
+        SELECT
+
+            s.id,
+            s.title,
+            s.description,
+            s.github_url,
+            s.figma_url,
+            s.presentation_path,
+            s.submitted_at,
+
+            h.id AS hackathon_id,
+            h.title AS hackathon_title,
+
+            CASE
+                WHEN s.team_id IS NULL THEN 'SOLO'
+                ELSE 'TEAM'
+            END AS participant_type,
+
+            t.id AS team_id,
+            t.name AS team_name,
+
+            u.id AS user_id,
+            u.first_name,
+            u.last_name,
+            u.email
+
+        FROM submissions s
+
+        JOIN hackathon_judges hj
+            ON hj.hackathon_id = s.hackathon_id
+
+        JOIN hackathons h
+            ON h.id = s.hackathon_id
+
+        LEFT JOIN teams t
+            ON t.id = s.team_id
+
+        LEFT JOIN users u
+            ON u.id = s.user_id
+
+        WHERE
+            hj.judge_id = $1
+
+        AND NOT EXISTS (
+
+            SELECT 1
+
+            FROM evaluations e
+
+            WHERE
+                e.submission_id = s.id
+            AND e.judge_id = $1
+
+        )
+
+        ORDER BY
+            h.end_date,
+            s.submitted_at
+    `, [judgeId]);
+}
+
+
+/**
+ * Count pending submissions for a judge
+ */
+async function countPendingSubmissions(judgeId) {
+    return db.one(`
+        SELECT COUNT(*)::int AS total
+
+        FROM submissions s
+
+        JOIN hackathon_judges hj
+            ON hj.hackathon_id = s.hackathon_id
+
+        WHERE
+            hj.judge_id = $1
+
+        AND NOT EXISTS (
+
+            SELECT 1
+
+            FROM evaluations e
+
+            WHERE
+                e.submission_id = s.id
+            AND e.judge_id = $1
+
+        )
+    `, [judgeId]);
+}
+
+
+/**
+ * Get submissions already evaluated by a judge
+ */
+async function getEvaluatedSubmissions(judgeId) {
+    return db.any(`
+        SELECT
+
+            s.id,
+            s.title,
+            s.description,
+            s.github_url,
+            s.figma_url,
+            s.presentation_path,
+            s.submitted_at,
+
+            h.id AS hackathon_id,
+            h.title AS hackathon_title,
+
+            e.id AS evaluation_id,
+            e.created_at AS evaluated_at,
+
+            CASE
+                WHEN s.team_id IS NULL THEN 'SOLO'
+                ELSE 'TEAM'
+            END AS participant_type,
+
+            t.id AS team_id,
+            t.name AS team_name,
+
+            u.id AS user_id,
+            u.first_name,
+            u.last_name,
+            u.email,
+
+            COALESCE(SUM(es.score),0) AS total_score
+
+        FROM evaluations e
+
+        JOIN submissions s
+            ON s.id = e.submission_id
+
+        JOIN hackathons h
+            ON h.id = s.hackathon_id
+
+        LEFT JOIN teams t
+            ON t.id = s.team_id
+
+        LEFT JOIN users u
+            ON u.id = s.user_id
+
+        LEFT JOIN evaluations_scores es
+            ON es.evaluation_id = e.id
+
+        WHERE
+            e.judge_id = $1
+
+        GROUP BY
+            e.id,
+            s.id,
+            h.id,
+            t.id,
+            u.id
+
+        ORDER BY
+            evaluated_at DESC
+    `, [judgeId]);
+}
+
+
+/**
+ * Count evaluated submissions for a judge
+ */
+async function countEvaluatedSubmissions(judgeId) {
+    return db.one(`
+        SELECT COUNT(*)::int AS total
+
+        FROM evaluations
+
+        WHERE judge_id = $1
+    `, [judgeId]);
+}
+
 module.exports = {
     findAll,
     findById,
@@ -333,4 +513,8 @@ module.exports = {
     findDetailedById,
     getCriteria,
     getCriterionById,
+    getPendingSubmissions,
+    countPendingSubmissions,
+    getEvaluatedSubmissions,
+    countEvaluatedSubmissions
 };

@@ -176,6 +176,105 @@ exports.deleteEvaluation = asyncHandler(async (req, res) => {
 
 });
 
+
+
+/**
+ * Get my pending submissions
+ */
+
+exports.getMyPendingSubmissions= asyncHandler(async (req, res, next) => {
+
+    try {
+        const submissions =
+            await evaluationService.getPendingSubmissions(req.user.id);
+
+        res.status(200).json(submissions);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * Get my pending submissions count
+ */
+
+exports.getMyPendingSubmissionsCount= asyncHandler(async (req, res, next) => {
+
+    try {
+        const result =
+            await evaluationService.getPendingSubmissionsCount(req.user.id);
+
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * Get my evaluated submissions
+ */
+
+
+exports.getMyEvaluatedSubmissions= asyncHandler(async (req, res, next) => {
+    try {
+        const submissions =
+            await evaluationService.getEvaluatedSubmissions(req.user.id);
+
+        res.status(200).json(submissions);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * Get my evaluated submissions count
+ */
+
+exports.getMyEvaluatedSubmissionsCount= asyncHandler(async (req, res, next) => {
+    try {
+        const result =
+            await evaluationService.getEvaluatedSubmissionsCount(req.user.id);
+
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * Get pending submissions by judge
+ */
+
+exports.getPendingSubmissions= asyncHandler(async (req, res, next) => {
+    try {
+        const submissions =
+            await evaluationService.getPendingSubmissions(
+                req.params.judgeId
+            );
+
+        res.status(200).json(submissions);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * Get evaluated submissions by judge
+ */
+exports.getEvaluatedSubmissions= asyncHandler(async (req, res, next) => {
+
+    try {
+        const submissions =
+            await evaluationService.getEvaluatedSubmissions(
+                req.params.judgeId
+            );
+
+        res.status(200).json(submissions);
+    } catch (error) {
+        next(error);
+    }
+});
+
 module.exports = {
     getAllEvaluations: exports.getAllEvaluations,
     getEvaluationById: exports.getEvaluationById,
@@ -186,5 +285,11 @@ module.exports = {
     getCriteria: exports.getCriteria,
     evaluateSubmission: exports.evaluateSubmission,
     getMyEvaluation: exports.getMyEvaluation,
-    getJudgeEvaluation: exports.getJudgeEvaluation
+    getJudgeEvaluation: exports.getJudgeEvaluation,
+    getMyPendingSubmissions : exports.getMyPendingSubmissions,
+    getMyPendingSubmissionsCount : exports.getMyPendingSubmissionsCount,
+    getMyEvaluatedSubmissions : exports.getMyEvaluatedSubmissions,
+    getMyEvaluatedSubmissionsCount : exports.getMyEvaluatedSubmissionsCount,
+    getEvaluatedSubmissions: exports.getEvaluatedSubmissions,
+    getPendingSubmissions: exports.getPendingSubmissions,
 };

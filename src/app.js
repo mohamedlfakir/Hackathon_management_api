@@ -7,6 +7,7 @@ const hackathonRoutes = require("./routes/hackathon.routes");
 const teamRoutes = require("./routes/team.routes");
 const submissionRoutes = require("./routes/submission.routes");
 const evaluationRoutes = require("./routes/evaluation.routes");
+const dashboardRoutes = require("./routes/dashboard.routes");
 
 const errorHandler = require("./middleware/error.middleware");
 
@@ -23,6 +24,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/hackathons", hackathonRoutes);
 app.use("/api/teams", teamRoutes);
 app.use("/api/submissions", submissionRoutes);
