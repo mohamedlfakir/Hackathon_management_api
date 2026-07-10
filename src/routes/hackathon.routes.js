@@ -21,6 +21,18 @@ const {
 | Public Routes
 |--------------------------------------------------------------------------
 */
+// Get all upcoming hackathons
+router.get(
+    "/upcoming",
+    hackathonController.getUpcomingHackathons
+);
+
+// Get all active (OPEN) hackathons
+router.get(
+    "/active",
+    hackathonController.getActiveHackathons
+);
+
 
 router.get(
     "/",
@@ -39,6 +51,7 @@ router.get(
 | Organizer / Admin Routes
 |--------------------------------------------------------------------------
 */
+
 
 router.post(
     "/",
@@ -173,6 +186,23 @@ router.get(
 | Participant Routes
 |--------------------------------------------------------------------------
 */
+
+// Get authenticated user's active/upcoming hackathons
+
+router.get(
+    "/my/active",
+    authenticate,
+    authorize("PARTICIPANT"),
+    hackathonController.getMyActiveHackathons
+);
+
+// Get authenticated user's finished hackathons
+router.get(
+    "/my/finished",
+    authenticate,
+    authorize("PARTICIPANT"),
+    hackathonController.getMyFinishedHackathons
+);
 
 router.post(
     "/:id/register",

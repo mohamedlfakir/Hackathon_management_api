@@ -23,6 +23,37 @@ async function getHackathonById(id) {
     return hackathon;
 }
 
+
+/**
+ * Get all upcoming hackathons
+ */
+async function getUpcomingHackathons() {
+    return await hackathonRepository.findUpcoming();
+}
+
+/**
+ * Get all active hackathons
+ */
+async function getActiveHackathons() {
+    return await hackathonRepository.findActive();
+}
+
+/**
+ * Get active/upcoming hackathons registered by the authenticated user
+ */
+async function getActiveHackathonsByUser(userId) {
+    return await hackathonRepository.findActiveHackathonsByUser(userId);
+}
+
+/**
+ * Get finished hackathons registered by the authenticated user
+ * including their ranking
+ */
+async function getFinishedHackathonsByUser(userId) {
+    return await hackathonRepository.findFinishedHackathonsByUser(userId);
+}
+
+
 /**
  * Create hackathon
  */
@@ -302,6 +333,10 @@ async function getHackathonParticipants(hackathonId) {
 module.exports = {
     getAllHackathons,
     getHackathonById,
+    getUpcomingHackathons,
+    getActiveHackathons,
+    getActiveHackathonsByUser,
+    getFinishedHackathonsByUser,
     createHackathon,
     updateHackathon,
     deleteHackathon,

@@ -35,6 +35,216 @@ async function findById(id) {
     );
 }
 
+
+/**
+ * Get all upcoming hackathons
+ */
+async function findUpcoming() {
+    return db.any(
+        `
+        SELECT
+            h.*,
+            CONCAT(u.first_name, ' ', u.last_name) AS organizer
+        FROM hackathons h
+        JOIN users u
+            ON u.id = h.created_by
+        WHERE h.status = 'UPCOMING'
+        ORDER BY h.start_date
+        `
+    );
+}
+
+/**
+ * Get all active hackathons
+ */
+async function findActive() {
+    return db.any(
+        `
+        SELECT
+            h.*,
+            CONCAT(u.first_name, ' ', u.last_name) AS organizer
+        FROM hackathons h
+        JOIN users u
+            ON u.id = h.created_by
+        WHERE h.status = 'OPEN'
+        ORDER BY h.start_date
+        `
+    );
+}
+
+
+/**
+ * Get active/upcoming hackathons registered by the user
+ */
+async function findActiveHackathonsByUser(userId) {
+    return db.any(
+        `
+        SELECT DISTINCT
+
+            h.*,
+
+            CONCAT(o.first_name, ' ', o.last_name) AS organizer,
+
+            CASE
+                WHEN hp.team_id IS NULL THEN 'SOLO'
+                ELSE 'TEAM'
+            END AS participant_type,
+
+            t.name AS team_name,
+
+            CASE
+                WHEN s.id IS NULL THEN 'NOT_SUBMITTED'
+                ELSE 'SUBMITTED'
+            END AS submission_status,
+
+            s.title AS project_name
+
+        FROM hackathons h
+
+        JOIN hackathon_participants hp
+            ON hp.hackathon_id = h.id
+
+        JOIN users o
+            ON o.id = h.created_by
+
+        LEFT JOIN teams t
+            ON t.id = hp.team_id
+
+        LEFT JOIN team_members tm
+            ON tm.team_id = hp.team_id
+
+        LEFT JOIN submissions s
+            ON s.hackathon_id = h.id
+            AND (
+                (hp.team_id IS NOT NULL AND s.team_id = hp.team_id)
+                OR
+                (hp.user_id IS NOT NULL AND s.user_id = hp.user_id)
+            )
+
+        WHERE
+            (
+                hp.user_id = $1
+                OR tm.user_id = $1
+            )
+        AND h.status IN ('OPEN', 'CLOSED')
+
+        ORDER BY h.start_date
+        `,
+        [userId]
+    );
+}
+
+/**
+ * Get finished hackathons registered by the user with ranking
+ */
+async function findFinishedHackathonsByUser(userId) {
+    return db.any(
+        `
+        WITH submission_scores AS (
+
+            SELECT
+                s.id AS submission_id,
+                s.hackathon_id,
+                s.team_id,
+                s.user_id,
+                s.title AS project_title,
+
+                COUNT(DISTINCT e.judge_id) AS judges_count,
+
+                COALESCE(SUM(es.score), 0) AS total_score,
+
+                COALESCE(AVG(judge_scores.total), 0) AS average_score
+
+            FROM submissions s
+
+            LEFT JOIN evaluations e
+                ON e.submission_id = s.id
+
+            LEFT JOIN evaluations_scores es
+                ON es.evaluation_id = e.id
+
+            LEFT JOIN (
+                SELECT
+                    e.id,
+                    SUM(es.score) AS total
+                FROM evaluations e
+                JOIN evaluations_scores es
+                    ON es.evaluation_id = e.id
+                GROUP BY e.id
+            ) judge_scores
+                ON judge_scores.id = e.id
+
+            GROUP BY
+                s.id,
+                s.hackathon_id,
+                s.team_id,
+                s.user_id,
+                s.title
+
+        ),
+
+        rankings AS (
+
+            SELECT
+                *,
+
+                RANK() OVER (
+                    PARTITION BY hackathon_id
+                    ORDER BY
+                        average_score DESC,
+                        total_score DESC
+                ) AS ranking
+
+            FROM submission_scores
+
+        )
+
+        SELECT DISTINCT
+
+            h.*,
+
+            CONCAT(o.first_name, ' ', o.last_name) AS organizer,
+
+            r.project_title,
+            r.total_score,
+            r.average_score,
+            r.judges_count,
+            r.ranking,
+
+            CASE
+                WHEN r.team_id IS NULL THEN 'SOLO'
+                ELSE 'TEAM'
+            END AS participant_type,
+
+            t.name AS team_name
+
+        FROM rankings r
+
+        JOIN hackathons h
+            ON h.id = r.hackathon_id
+
+        JOIN users o
+            ON o.id = h.created_by
+
+        LEFT JOIN teams t
+            ON t.id = r.team_id
+
+        LEFT JOIN team_members tm
+            ON tm.team_id = r.team_id
+
+        WHERE
+            h.status = 'FINISHED'
+        AND (
+            r.user_id = $1
+            OR tm.user_id = $1
+        )
+
+        ORDER BY h.end_date DESC
+        `,
+        [userId]
+    );
+}
+
 /**
  * Create hackathon
  */
@@ -463,6 +673,10 @@ async function getHackathonSubmissions(hackathonId) {
 module.exports = {
     findAll,
     findById,
+    findUpcoming,
+    findActive,
+    findActiveHackathonsByUser,
+    findFinishedHackathonsByUser,
     create,
     update,
     deleteHackathon,

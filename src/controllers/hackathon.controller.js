@@ -16,6 +16,8 @@ exports.getAllHackathons = asyncHandler(async (req, res) => {
 /**
  * GET /api/hackathons/:id
  */
+
+
 exports.getHackathonById = asyncHandler(async (req, res) => {
     const hackathon = await hackathonService.getHackathonById(req.params.id);
 
@@ -23,6 +25,83 @@ exports.getHackathonById = asyncHandler(async (req, res) => {
         success: true,
         hackathon
     });
+});
+
+
+/**
+ * Get all upcoming hackathons
+ */
+exports.getUpcomingHackathons = asyncHandler(async (req, res, next) => {
+
+    try {
+        const hackathons =
+            await hackathonService.getUpcomingHackathons();
+
+         res.status(200).json({
+        success: true,
+        hackathons
+    });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * Get all active hackathons
+ */
+exports.getActiveHackathons = asyncHandler(async (req, res, next) => {
+
+    try {
+        const hackathons =
+            await hackathonService.getActiveHackathons();
+
+         res.status(200).json({
+        success: true,
+        hackathons
+    });
+    } catch (error) {
+        next(error);
+    }
+}); 
+/**
+ * Get authenticated user's active/upcoming hackathons
+ */
+exports.getMyActiveHackathons = asyncHandler(async (req, res, next) => {
+
+    try {
+        const hackathons =
+            await hackathonService.getActiveHackathonsByUser(
+                req.user.id
+            );
+
+          res.status(200).json({
+        success: true,
+        hackathons
+    });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * Get authenticated user's finished hackathons
+ */
+
+exports.getMyFinishedHackathons = asyncHandler(async (req, res, next) => {
+
+    try {
+        const hackathons =
+            await hackathonService.getFinishedHackathonsByUser(
+                req.user.id
+            );
+
+          res.status(200).json({
+        success: true,
+        hackathons
+    });
+    } catch (error) {
+        next(error);
+    }
 });
 
 /**
@@ -312,6 +391,10 @@ exports.unregisterParticipant = asyncHandler(async (req, res) => {
 module.exports = {
     getAllHackathons: exports.getAllHackathons,
     getHackathonById: exports.getHackathonById,
+    getUpcomingHackathons: exports.getUpcomingHackathons,
+    getActiveHackathons: exports.getActiveHackathons,
+    getMyActiveHackathons : exports.getMyActiveHackathons,
+    getMyFinishedHackathons: exports.getMyFinishedHackathons,
     createHackathon: exports.createHackathon,
     updateHackathon: exports.updateHackathon,
     deleteHackathon: exports.deleteHackathon,

@@ -120,9 +120,8 @@ const updateHackathonValidator = [
         .isIn([
             "UPCOMING",
             "OPEN",
-            "IN_PROGRESS",
-            "FINISHED",
-            "CANCELLED"
+            "CLOSED",
+            "FINISHED"
         ])
         .withMessage("Invalid status")
     ];
