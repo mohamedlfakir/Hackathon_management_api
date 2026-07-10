@@ -29,6 +29,83 @@ exports.getEvaluationById = asyncHandler(async (req, res) => {
 
 });
 
+
+exports.getCriteria = asyncHandler(async (req,res,next) => {
+
+  
+
+        const criteria = await evaluationService.getCriteria();
+
+        
+    res.status(200).json({
+            success: true,
+            criteria
+        });
+        
+});
+
+exports.getMyEvaluation = asyncHandler(async (req,res,next) => {
+
+    try{
+
+        const evaluation = await evaluationService.getJudgeEvaluation(
+            Number(req.params.submissionId),
+            req.user.id
+        );
+
+        res.status(200).json({
+            success:true,
+            evaluation
+        });
+
+    }catch(err){
+        next(err);
+    }
+
+});
+
+exports.getJudgeEvaluation = asyncHandler(async (req,res,next) => {
+
+    try{
+
+        const evaluation = await evaluationService.getJudgeEvaluation(
+            Number(req.params.submissionId),
+            Number(req.params.judgeId)
+        );
+
+        res.status(200).json({
+            success:true,
+            evaluation
+        });
+
+    }catch(err){
+        next(err);
+    }
+
+});
+
+exports.evaluateSubmission = asyncHandler(async (req,res,next) => {
+
+
+    try{
+
+        await evaluationService.evaluateSubmission(
+            req.params.submissionId,
+            req.user.id,
+            req.body.evaluations
+        );
+
+        res.json({
+            success:true,
+            message:"Evaluation saved successfully."
+        });
+
+    }catch(err){
+        next(err);
+    }
+
+});
+
 /**
  * GET /api/evaluations/submission/:submissionId
  */
@@ -105,5 +182,9 @@ module.exports = {
     getSubmissionEvaluations: exports.getSubmissionEvaluations,
     createEvaluation: exports.createEvaluation,
     updateEvaluation: exports.updateEvaluation,
-    deleteEvaluation: exports.deleteEvaluation
+    deleteEvaluation: exports.deleteEvaluation,
+    getCriteria: exports.getCriteria,
+    evaluateSubmission: exports.evaluateSubmission,
+    getMyEvaluation: exports.getMyEvaluation,
+    getJudgeEvaluation: exports.getJudgeEvaluation
 };

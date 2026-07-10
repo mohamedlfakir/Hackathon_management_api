@@ -124,7 +124,7 @@ router.get(
 router.get(
     "/:id/judges",
     authenticate,
-    authorize("ADMIN", "ORGANIZER"),
+    authorize("ADMIN", "ORGANIZER","JUDGE"),
     hackathonIdValidator,
     validate,
     hackathonController.getHackathonJudges
@@ -134,7 +134,7 @@ router.get(
 router.get(
     "/judges/:judgeId/hackathons",
     authenticate,
-    authorize("ADMIN", "ORGANIZER"),
+    authorize("ADMIN", "ORGANIZER","JUDGE"),
     judgeIdValidator,
     validate,
     hackathonController.getJudgeHackathons
@@ -157,13 +157,13 @@ router.delete("/:id/teams/:teamId",
 
 router.get("/:id/submissions", 
     authenticate,
-    authorize("ADMIN", "ORGANIZER"), 
+    authorize("ADMIN", "ORGANIZER","JUDGE"), 
     hackathonController.getHackathonSubmissions);    
 
 router.get(
     "/:id/participants",
     authenticate,
-    authorize("ADMIN", "ORGANIZER"),
+    authorize("ADMIN", "ORGANIZER","JUDGE"),
     hackathonController.getHackathonParticipants
 );
 

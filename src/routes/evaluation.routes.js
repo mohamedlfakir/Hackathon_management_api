@@ -29,6 +29,13 @@ router.get(
 );
 
 router.get(
+    "/criteria",
+    authenticate,
+    authorize("JUDGE", "ADMIN"),
+    evaluationController.getCriteria
+);
+
+router.get(
     "/:id",
     authenticate,
     authorize("JUDGE", "ADMIN"),
@@ -38,9 +45,9 @@ router.get(
 );
 
 router.get(
-    "/submission/:submissionId",
+    "/submissions/:submissionId",
     authenticate,
-    authorize("JUDGE", "ADMIN"),
+    authorize( "ADMIN", "ORGANIZER", "JUDGE"),
     submissionIdValidator,
     validate,
     evaluationController.getSubmissionEvaluations
@@ -53,6 +60,22 @@ router.post(
     createEvaluationValidator,
     validate,
     evaluationController.createEvaluation
+);
+
+router.post(
+    "/:submissionId",
+    authenticate,
+    authorize("JUDGE", "ADMIN"),
+    createEvaluationValidator,
+    validate,
+    evaluationController.evaluateSubmission
+);
+
+router.get(
+    "/submissions/:submissionId/my-evaluation",
+    authenticate,
+    authorize("JUDGE"),
+    evaluationController.getMyEvaluation
 );
 
 router.put(

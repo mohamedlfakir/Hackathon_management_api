@@ -23,25 +23,17 @@ const submissionIdValidator = [
  */
 const createEvaluationValidator = [
 
-    body("submission_id")
-        .isInt({ min: 1 })
-        .withMessage("Submission ID is required"),
-
-    body("comments")
+    body("evaluations.*.comment")
         .optional()
         .trim()
         .isLength({ max: 5000 })
         .withMessage("Comments cannot exceed 5000 characters"),
 
-    body("scores")
-        .isArray({ min: 1 })
-        .withMessage("Scores are required"),
-
-    body("scores.*.criterion_id")
+    body("evaluations.*.criterion_id")
         .isInt({ min: 1 })
         .withMessage("Criterion ID must be a positive integer"),
 
-    body("scores.*.score")
+    body("evaluations.*.score")
         .isFloat({ min: 0 })
         .withMessage("Score must be a positive number")
 ];

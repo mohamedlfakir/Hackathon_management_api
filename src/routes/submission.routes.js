@@ -27,13 +27,18 @@ const {
 |--------------------------------------------------------------------------
 */
 
+
 router.get(
     "/",
+    authenticate,
+    authorize("ADMIN", "ORGANIZER"),
     submissionController.getAllSubmissions
 );
 
 router.get(
     "/:id",
+    authenticate,
+    authorize("ADMIN", "ORGANIZER","JUDGE"),
     submissionIdValidator,
     validate,
     submissionController.getSubmissionById

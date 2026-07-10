@@ -58,72 +58,128 @@ async function findByJudgeAndSubmission(judgeId, submissionId) {
 
 /**
  * Create evaluation with scores
- */
-async function create(evaluation, scores) {
-
-    return db.tx(async t => {
-
-        const createdEvaluation = await t.one(
-            `
-            INSERT INTO evaluations (
-                submission_id,
-                judge_id,
-                comments
-            )
-            VALUES ($1, $2, $3)
-            RETURNING *
-            `,
-            [
-                evaluation.submission_id,
-                evaluation.judge_id,
-                evaluation.comments
-            ]
-        );
-
-        for (const score of scores) {
-
-            await t.none(
-                `
-                INSERT INTO evaluation_scores (
-                    evaluation_id,
-                    criterion_id,
-                    score
-                )
-                VALUES ($1, $2, $3)
-                `,
-                [
-                    createdEvaluation.id,
-                    score.criterion_id,
-                    score.score
-                ]
-            );
-
-        }
-
-        return createdEvaluation;
-
-    });
-
+ */async function createEvaluation(data) {
+    return db.one(`
+        INSERT INTO evaluations (
+            submission_id,
+            judge_id,
+            criterion_id,
+            score,
+            comment
+        )
+        VALUES ($1,$2,$3,$4,$5)
+        RETURNING *
+    `, [
+        data.submission_id,
+        data.judge_id,
+        data.criterion_id,
+        data.score,
+        data.comment
+    ]);
 }
+
+
+async function updateEvaluation(data) {
+    return db.one(`
+        UPDATE evaluations
+        SET
+            score = $4,
+            comment = $5
+        WHERE
+            submission_id = $1
+            AND judge_id = $2
+            AND criterion_id = $3
+        RETURNING *
+    `, [
+        data.submission_id,
+        data.judge_id,
+        data.criterion_id,
+        data.score,
+        data.comment
+    ]);
+}
+
+async function getSubmissionEvaluations(submissionId) {
+    return db.any(`
+        SELECT
+            e.id,
+            e.score,
+            e.comment,
+            e.created_at,
+
+            c.id AS criterion_id,
+            c.code,
+            c.name,
+            c.max_score,
+
+            u.id AS judge_id,
+            u.username,
+            u.first_name,
+            u.last_name
+
+        FROM evaluations e
+        JOIN evaluation_criteria c
+            ON c.id = e.criterion_id
+        JOIN users u
+            ON u.id = e.judge_id
+
+        WHERE e.submission_id = $1
+
+        ORDER BY c.id
+    `,[submissionId]);
+}
+
+async function getJudgeEvaluations(submissionId, judgeId) {
+    return db.any(`
+        SELECT
+            e.id,
+            e.criterion_id,
+            ec.code,
+            ec.name,
+            ec.max_score,
+            e.score,
+            e.comment,
+            e.created_at
+        FROM evaluations e
+        JOIN evaluation_criteria ec
+            ON ec.id = e.criterion_id
+        WHERE
+            e.submission_id = $1
+            AND e.judge_id = $2
+        ORDER BY ec.id
+    `,[submissionId, judgeId]);
+}
+
 
 /**
  * Get scores of an evaluation
  */
-async function getScores(evaluationId) {
+async function getScores(submissionId) {
     return db.any(
-        `
+         `
         SELECT
-            es.criterion_id,
+            e.id,
+            e.judge_id,
+            u.first_name,
+            u.last_name,
+            e.criterion_id,
+            ec.code,
             ec.name,
             ec.max_score,
-            es.score
-        FROM evaluation_scores es
+            e.score,
+            e.comment,
+            e.created_at
+        FROM evaluations e
         JOIN evaluation_criteria ec
-            ON ec.id = es.criterion_id
-        WHERE es.evaluation_id = $1
-        ORDER BY ec.id
+            ON ec.id = e.criterion_id
+        JOIN users u
+            ON u.id = e.judge_id
+        WHERE e.submission_id = $1
+        ORDER BY
+            u.last_name,
+            ec.id
         `,
-        [evaluationId]
+        [submissionId]
     );
 }
 
@@ -166,6 +222,7 @@ async function updateScore(evaluationId, criterionId, score) {
 /**
  * Update evaluation and all scores
  */
+/*
 async function updateEvaluation(id, comments, scores) {
 
     return db.tx(async t => {
@@ -205,7 +262,7 @@ async function updateEvaluation(id, comments, scores) {
     });
 
 }
-
+*/
 /**
  * Get all evaluations for a submission
  */
@@ -262,12 +319,48 @@ async function findDetailedById(id) {
 
 }
 
+async function getCriteria() {
+    return db.any(`
+        SELECT
+            id,
+            code,
+            name,
+            max_score
+        FROM evaluation_criteria
+        ORDER BY id
+    `);
+}
+
+async function getCriterionById(id) {
+    return db.oneOrNone(`
+        SELECT
+            id,
+            code,
+            name,
+            max_score
+        FROM evaluation_criteria
+        WHERE id = $1
+    `, [id]);
+}
+
+async function findEvaluation(submissionId, judgeId, criterionId) {
+    return db.oneOrNone(`
+        SELECT *
+        FROM evaluations
+        WHERE submission_id = $1
+          AND judge_id = $2
+          AND criterion_id = $3
+    `, [submissionId, judgeId, criterionId]);
+}
 
 module.exports = {
     findAll,
     findById,
     findByJudgeAndSubmission,
-    create,
+    findEvaluation,
+    createEvaluation,
+    getSubmissionEvaluations,
+    getJudgeEvaluations,
     getScores,
     updateComments,
     updateScore,
@@ -275,4 +368,6 @@ module.exports = {
     findBySubmission,
     updateEvaluation,
     findDetailedById,
+    getCriteria,
+    getCriterionById,
 };

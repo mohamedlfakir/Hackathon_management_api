@@ -139,6 +139,60 @@ async function deleteEvaluation(id, judgeId) {
     };
 }
 
+async function getCriteria() {
+    return evaluationRepository.getCriteria();
+}
+
+async function evaluateSubmission(submissionId, judgeId, evaluations) {
+
+    for (const item of evaluations) {
+
+        const criterion = await evaluationRepository.getCriterionById(
+            item.criterion_id
+        );
+
+        if (!criterion)
+            throw new AppError("Criterion not found",404);
+
+        if (item.score > criterion.max_score || item.score < 0)
+            throw new AppError(
+                `Score must be between 0 and ${criterion.max_score}`,
+                400
+            );
+
+        const existing = await evaluationRepository.findEvaluation(
+            submissionId,
+            judgeId,
+            item.criterion_id
+        );
+
+        if (existing) {
+
+            await evaluationRepository.updateEvaluation({
+                submission_id: submissionId,
+                judge_id: judgeId,
+                criterion_id: item.criterion_id,
+                score: item.score,
+                comment: item.comment
+            });
+
+        } else {
+
+            await evaluationRepository.createEvaluation({
+                submission_id: submissionId,
+                judge_id: judgeId,
+                criterion_id: item.criterion_id,
+                score: item.score,
+                comment: item.comment
+            });
+
+        }
+    }
+
+    return true;
+}
+
+
 /**
  * Get all evaluations for a submission
  */
@@ -161,11 +215,31 @@ async function getSubmissionEvaluations(submissionId) {
     return evaluations;
 }
 
+/**
+ * Get all scores for a submission by a judge
+ */
+async function getJudgeEvaluation(submissionId, judgeId) {
+
+    const submission = await submissionRepository.findById(submissionId);
+
+    if (!submission) {
+        throw new AppError("Submission not found",404);
+    }
+
+    return await evaluationRepository.getJudgeEvaluations(
+        submissionId,
+        judgeId
+    );
+}
+
 module.exports = {
     getAllEvaluations,
     getEvaluationById,
     createEvaluation,
     updateEvaluation,
     deleteEvaluation,
-    getSubmissionEvaluations
+    getSubmissionEvaluations,
+    getCriteria,
+    evaluateSubmission,
+    getJudgeEvaluation
 };
