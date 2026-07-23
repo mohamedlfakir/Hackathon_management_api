@@ -15,6 +15,7 @@ const {
     updateProfileValidator,
     changePasswordValidator,
     updateRoleValidator,
+    createUserValidator
 } = require("../validators/user.validator");
 
 /*
@@ -80,6 +81,15 @@ router.put(
     validate,
     userController.updateRole
 );
+
+router.post("/",
+    authenticate,
+    authorize("ADMIN"),
+    createUserValidator,
+    validate,
+    userController.createUser
+);
+
 
 router.delete(
     "/:id",

@@ -1,8 +1,143 @@
 const db = require("../config/database");
 
 /**
- * Get all submissions
+ * Get all submissions with derived status, search, filters, sorting, and pagination
  */
+async function findAll(params = {}) {
+  const {
+    page = 1,
+    limit = 10,
+    search,
+    hackathon_id,
+    status = "ALL", // 'ALL' | 'UNEVALUATED' | 'IN_PROGRESS' | 'COMPLETED'
+    sort_by = "submitted_at",
+    sort_order = "desc",
+  } = params;
+
+  const conditions = [];
+  const queryParams = [];
+  let paramIdx = 1;
+
+  // 1. Search filter
+  if (search && search.trim() !== "") {
+    conditions.push(
+      `(s.title ILIKE $${paramIdx} OR t.name ILIKE $${paramIdx} OR u.first_name ILIKE $${paramIdx} OR u.last_name ILIKE $${paramIdx})`
+    );
+    queryParams.push(`%${search.trim()}%`);
+    paramIdx++;
+  }
+
+  // 2. Hackathon filter
+  if (hackathon_id) {
+    conditions.push(`COALESCE(s.hackathon_id, t.hackathon_id) = $${paramIdx}`);
+    queryParams.push(Number(hackathon_id));
+    paramIdx++;
+  }
+
+  // SQL subqueries for evaluation counts & judge counts
+  // Note: Adjust 'hackathon_judges' if your junction table is named differently
+  const evalsCountSubquery = `(SELECT COUNT(DISTINCT e.id) FROM evaluations e WHERE e.submission_id = s.id)`;
+  const totalJudgesSubquery = `(SELECT COUNT(DISTINCT hj.judge_id) FROM hackathon_judges hj WHERE hj.hackathon_id = COALESCE(s.hackathon_id, t.hackathon_id))`;
+
+  // 3. Status filter based on derived evaluation completion
+  if (status === "UNEVALUATED") {
+    conditions.push(`${evalsCountSubquery} = 0`);
+  } else if (status === "IN_PROGRESS") {
+    conditions.push(
+      `${evalsCountSubquery} > 0 AND ${evalsCountSubquery} < ${totalJudgesSubquery}`
+    );
+  } else if (status === "COMPLETED") {
+    conditions.push(
+      `${evalsCountSubquery} >= ${totalJudgesSubquery} AND ${evalsCountSubquery} > 0`
+    );
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+  // 4. Allowed sort columns whitelist
+  const allowedSortColumns = {
+    title: "s.title",
+    team_name: "t.name",
+    hackathon: "h.title",
+    submitted_at: "s.submitted_at",
+    score: "score",
+    evaluation_status: "evaluation_status",
+  };
+
+  const sortColumn = allowedSortColumns[sort_by] || "s.submitted_at";
+  const orderDirection = String(sort_order).toLowerCase() === "asc" ? "ASC" : "DESC";
+
+  // 5. Pagination offset
+  const numericLimit = Number(limit);
+  const numericPage = Number(page);
+  const offset = (numericPage - 1) * numericLimit;
+
+  queryParams.push(numericLimit, offset);
+  const limitParam = `$${paramIdx++}`;
+  const offsetParam = `$${paramIdx++}`;
+
+  const query = `
+    SELECT
+      s.*,
+      t.name AS team_name,
+      h.id AS hackathon_id,
+      h.title AS hackathon_title,
+      u.username,
+      u.first_name,
+      u.last_name,
+      u.email,
+
+      -- Derived evaluation status logic
+      CASE
+        WHEN ${evalsCountSubquery} = 0 THEN 'UNEVALUATED'
+        WHEN ${evalsCountSubquery} >= ${totalJudgesSubquery} AND ${totalJudgesSubquery} > 0 THEN 'COMPLETED'
+        ELSE 'IN_PROGRESS'
+      END AS evaluation_status,
+
+      -- Boolean flag for quick frontend checks
+      (${evalsCountSubquery} > 0) AS is_evaluated,
+
+      -- Average score computed from evaluations_scores
+      (
+        SELECT ROUND(AVG(es.score))
+        FROM evaluations e
+        JOIN evaluations_scores es ON es.evaluation_id = e.id
+        WHERE e.submission_id = s.id
+      ) AS score,
+
+      -- Total matching count window function for pagination
+      COUNT(*) OVER() AS total_count
+
+    FROM submissions s
+
+    LEFT JOIN teams t
+      ON t.id = s.team_id
+
+    LEFT JOIN users u
+      ON u.id = s.user_id
+
+    LEFT JOIN hackathons h
+      ON h.id = COALESCE(s.hackathon_id, t.hackathon_id)
+
+    ${whereClause}
+
+    ORDER BY ${sortColumn} ${orderDirection}
+    LIMIT ${limitParam} OFFSET ${offsetParam}
+  `;
+
+  const rows = await db.any(query, queryParams);
+
+  const total = rows.length > 0 ? parseInt(rows[0].total_count, 10) : 0;
+  const data = rows.map(({ total_count, ...submission }) => submission);
+
+  return {
+    data,
+    total,
+    page: numericPage,
+    limit: numericLimit,
+  };
+}
+/*
 async function findAll() {
     return db.any(
         `
@@ -10,16 +145,25 @@ async function findAll() {
             s.*,
             t.name AS team_name,
             h.id AS hackathon_id,
-            h.title AS hackathon_title
+            h.title AS hackathon_title,
+            u.username,
+            u.first_name,
+            u.last_name,
+            u.email
         FROM submissions s
-        JOIN teams t
+
+        LEFT JOIN teams t
             ON t.id = s.team_id
+
+        LEFT JOIN users u
+            ON u.id = s.user_id
+
         JOIN hackathons h
             ON h.id = t.hackathon_id
-        ORDER BY s.created_at DESC
+        ORDER BY s.submitted_at DESC
         `
     );
-}
+}*/
 
 /**
  * Get submission by id

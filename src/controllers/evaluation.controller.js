@@ -6,7 +6,7 @@ const asyncHandler = require("../utils/asyncHandler");
  */
 exports.getAllEvaluations = asyncHandler(async (req, res) => {
 
-    const evaluations = await evaluationService.getAllEvaluations();
+    const evaluations = await evaluationService.getAllEvaluations(req.query);
 
     res.status(200).json({
         success: true,

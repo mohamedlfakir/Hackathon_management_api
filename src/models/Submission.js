@@ -7,8 +7,7 @@ function createSubmission(data = {}) {
         github_url: data.github_url ?? "",
         figma_url: data.figma_url ?? "",
         presentation_path: data.presentation_path ?? null,
-        created_at: data.created_at ?? null,
-        updated_at: data.updated_at ?? null
+        submitted_at: data.submitted_at ?? null,
     };
 }
 

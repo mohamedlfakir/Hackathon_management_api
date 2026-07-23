@@ -1,6 +1,6 @@
 const userService = require("../services/user.service");
 const asyncHandler = require("../utils/asyncHandler");
-
+const authService = require("../services/auth.service");
 const AppError = require("../utils/AppError");
 
 /**
@@ -24,6 +24,21 @@ exports.getUserById = asyncHandler(async (req, res) => {
     res.status(200).json({
         success: true,
         user
+    });
+});
+
+exports.createUser = asyncHandler(async (req, res) => {
+
+  const user = await authService.register(req.body);
+
+    res.status(201).json({
+        success: true,
+        message: "User registered successfully",
+        user: {
+            username: user.username,
+            email: user.email,
+            role: user.role
+        }
     });
 });
 

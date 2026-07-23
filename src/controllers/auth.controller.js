@@ -11,7 +11,7 @@ exports.register = asyncHandler(async (req, res) => {
             id: user.id,
             username: user.username,
             email: user.email,
-            role: user.role
+            role: "PARTICIPANT"
         }
     });
 });

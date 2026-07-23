@@ -25,6 +25,34 @@ async function getById(id) {
     return user;
 }
 
+
+async function create(data) {
+
+    const exists = await repository.findByEmail(data.email);
+
+    if (exists)
+        throw new AppError("Email already exists", 409);
+
+    exists = await repository.findByUsername(data.username);
+
+    if (exists)
+        throw new AppError("Username already exists", 409);
+
+    const hash = await bcrypt.hash(data.password, 10);
+
+    const user = await repository.create({
+        username: data.username,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        password_hash: hash,
+        role: data.role,
+    });
+
+    return user;
+}
+
+
 /**
  * Update profile
  */

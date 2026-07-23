@@ -7,8 +7,8 @@ const AppError = require("../utils/AppError");
 /**
  * Get all submissions
  */
-async function getAllSubmissions() {
-    return await submissionRepository.findAll();
+async function getAllSubmissions(params = {}) {
+    return await submissionRepository.findAll(params);
 }
 
 /**

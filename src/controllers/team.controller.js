@@ -92,7 +92,7 @@ exports.joinTeam = asyncHandler(async (req, res) => {
 /**
  * Remove member from team
  */
-exports.removeMember = asyncHandler(async (req, res, nex) => { 
+exports.removeMember = asyncHandler(async (req, res, next) => { 
     try {
         const teamId = Number(req.params.id);
         const userId = Number(req.params.userId);
@@ -162,7 +162,7 @@ exports.updateAvatar = asyncHandler(async (req, res) => {
 /**
  * Get authenticated user's team in a hackathon
  */
-exports.getUserTeam = asyncHandler(async (req, res) => {
+exports.getUserTeam = asyncHandler(async (req, res,next) => {
     try {
         const hackathonId = Number(req.params.hackathonId);
         const userId = req.user.id;

@@ -6,7 +6,7 @@ const AppError = require("../utils/AppError");
  * GET /api/submissions
  */
 exports.getAllSubmissions = asyncHandler(async (req, res) => {
-    const submissions = await submissionService.getAllSubmissions();
+    const submissions = await submissionService.getAllSubmissions(req.query);
 
     res.status(200).json({
         success: true,

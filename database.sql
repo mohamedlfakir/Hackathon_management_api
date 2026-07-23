@@ -215,16 +215,11 @@ CREATE TABLE evaluation_criteria (
 -- =====================================================
 
 CREATE TABLE evaluations (
-
     id SERIAL PRIMARY KEY,
 
     submission_id INTEGER NOT NULL,
 
     judge_id INTEGER NOT NULL,
-
-    criterion_id INTEGER NOT NULL,
-
-    score INTEGER NOT NULL,
 
     comment TEXT,
 
@@ -238,12 +233,28 @@ CREATE TABLE evaluations (
         REFERENCES users(id)
         ON DELETE CASCADE,
 
-    FOREIGN KEY (criterion_id)
-        REFERENCES evaluation_criteria(id)
-        ON DELETE CASCADE,
-
-    UNIQUE(submission_id, judge_id, criterion_id)
+    UNIQUE(submission_id, judge_id)
 );
+
+CREATE TABLE evaluations_scores (
+	id SERIAL PRIMARY KEY,
+	
+	evaluation_id INT NOT NULL,
+	
+	criterion_id INTEGER NOT NULL,
+	
+    score INTEGER NOT NULL,
+
+    comment TEXT,
+
+	FOREIGN KEY (evaluation_id)
+        REFERENCES evaluations(id)
+        ON DELETE CASCADE,
+		
+	FOREIGN KEY (criterion_id)
+        REFERENCES evaluation_criteria(id)
+        ON DELETE CASCADE
+)
 
 CREATE TABLE hackathon_judges (
     hackathon_id INT NOT NULL,
